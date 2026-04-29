@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logic Rail — Poslovni plan kalkulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="Inter-Regular-normal.js"></script>
+<script src="Inter-Bold-bold.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+<script src="i18n.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2030;
+  --bg-elevated: #232b3d;
+  --border: #2a3447;
+  --border-strong: #3a4459;
+  --text-primary: #e8eaf0;
+  --text-secondary: #9ca3b8;
+  --text-tertiary: #6b7390;
+  --accent: #4f8cff;
+  --accent-dim: #1e3a6f;
+  --accent-light: #2a4a7f;
+  --green: #34d399;
+  --green-dim: #1e3a2f;
+  --red: #f87171;
+  --red-dim: #3a1e1e;
+  --amber: #fbbf24;
+  --amber-dim: #3a2f1e;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79,140,255,0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(52,211,153,0.08), transparent),
+    var(--bg-primary);
+  background-attachment: fixed;
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,14,26,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent), #6ba3ff);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(79,140,255,0.3);
+}
+.brand-text { line-height: 1.2; }
+.brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.brand-sub { font-size: 12px; color: var(--text-secondary); }
+
+.header-actions { display: flex; gap: 8px; }
+.btn {
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.btn:hover { background: var(--bg-elevated); border-color: var(--border-strong); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #6ba3ff);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 2px 8px rgba(79,140,255,0.25);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a96ff, #75aeff);
+  box-shadow: 0 4px 16px rgba(79,140,255,0.4);
+}
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Layout */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.page-sub {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+/* Hero summary */
+.hero-summary {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.hero-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card.profit-card {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+  border-color: var(--border-strong);
+}
+.hero-card.profit-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #6ba3ff);
+}
+.hero-card.profit-positive::before { background: linear-gradient(90deg, var(--green), #6ee7b7); }
+.hero-card.profit-negative::before { background: linear-gradient(90deg, var(--red), #fca5a5); }
+
+.hero-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.hero-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.hero-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+.hero-value.green { color: var(--green); }
+.hero-value.red { color: var(--red); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+.tab {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.tab:hover { color: var(--text-primary); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin: 24px 0 12px;
+}
+.section-label:first-child { margin-top: 0; }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .hero-summary { grid-template-columns: 1fr 1fr; }
+}
+
+/* Form fields */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.field-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+input[type="number"], input[type="text"], select {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+input[type="number"]:focus, input[type="text"]:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-val {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 44px;
+  text-align: right;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Tables */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl td { padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.tbl td:last-child { text-align: right; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+.tbl tr.head td {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 4px 6px;
+  border-bottom: none;
+}
+.tbl tr.total td {
+  font-weight: 600;
+  font-size: 14px;
+  border-top: 2px solid var(--border-strong);
+  border-bottom: none;
+  padding-top: 12px;
+  background: rgba(79,140,255,0.04);
+}
+.tbl tr.profit td { color: var(--green); }
+.tbl tr.loss td { color: var(--red); }
+.tbl tr.subtle td { color: var(--text-secondary); font-size: 12px; }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-blue { background: var(--accent-dim); color: var(--accent); }
+.badge-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+}
+
+/* Alerts */
+.alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  line-height: 1.55;
+}
+.alert-info { background: rgba(79,140,255,0.08); border: 1px solid rgba(79,140,255,0.2); color: #b3cfff; }
+.alert-warn { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: #fcd34d; }
+.alert-icon { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; }
+
+/* Metric tiles for resources */
+.metric-tile {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  position: relative;
+}
+.metric-tile-icon {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 22px;
+  height: 22px;
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
+.metric-tile-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.metric-tile-value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.metric-tile-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Charts */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+/* Route diagram */
+.route-diagram {
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.route-svg { width: 100%; height: auto; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* Language switcher */
+.lang-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-right: 8px;
+}
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  overflow: hidden;
+}
+.lang-btn:hover { background: var(--bg-elevated); }
+.lang-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.lang-btn svg { display: block; width: 22px; height: 16px; border-radius: 2px; }
+@media (max-width: 700px) {
+  .lang-switch { padding: 3px; gap: 2px; }
+  .lang-btn { width: 28px; height: 24px; }
+  .lang-btn svg { width: 18px; height: 13px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3" width="16" height="14" rx="2"></rect>
+          <path d="M4 11h16"></path>
+          <path d="M9 17l-2 4"></path>
+          <path d="M15 17l2 4"></path>
+          <circle cx="9" cy="14" r="1"></circle>
+          <circle cx="15" cy="14" r="1"></circle>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">Logic Rail</div>
+        <div class="brand-sub" data-i18n="brand.sub">Poslovni plan · Dobova ↔ Villa Opicina</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="lang-switch" id="lang-switch" role="group" aria-label="Language">
+        <button class="lang-btn" data-lang="hr" onclick="setLang('hr')" title="Hrvatski" aria-label="Hrvatski">
+          <svg viewBox="0 0 6 4" preserveAspectRatio="none"><rect width="6" height="1.333" y="0" fill="#ff0000"/><rect width="6" height="1.333" y="1.333" fill="#fff"/><rect width="6" height="1.333" y="2.667" fill="#171796"/></svg>
+        </button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')" title="English" aria-label="English">
+          <svg viewBox="0 0 60 30" preserveAspectRatio="none"><clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg>
+        </button>
+        <button class="lang-btn" data-lang="it" onclick="setLang('it')" title="Italiano" aria-label="Italiano">
+          <svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="1" height="2" x="0" fill="#009246"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#ce2b37"/></svg>
+        </button>
+        <button class="lang-btn" data-lang="sl" onclick="setLang('sl')" title="Slovenščina" aria-label="Slovenščina">
+          <svg viewBox="0 0 6 3" preserveAspectRatio="none"><rect width="6" height="1" y="0" fill="#fff"/><rect width="6" height="1" y="1" fill="#0000aa"/><rect width="6" height="1" y="2" fill="#d50000"/></svg>
+        </button>
+        <button class="lang-btn" data-lang="sr" onclick="setLang('sr')" title="Srpski" aria-label="Srpski">
+          <svg viewBox="0 0 6 3" preserveAspectRatio="none"><rect width="6" height="1" y="0" fill="#c6363c"/><rect width="6" height="1" y="1" fill="#0c4076"/><rect width="6" height="1" y="2" fill="#fff"/></svg>
+        </button>
+      </div>
+      <button class="btn" onclick="resetDefaults()" data-i18n-title="btn.resetTitle" title="Vrati na zadane vrijednosti">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        <span data-i18n="btn.reset">Reset</span>
+      </button>
+      <button class="btn btn-primary" onclick="exportPDF()">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span data-i18n="btn.generatePdf">Generiraj PDF</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <h1 class="page-title" data-i18n="page.title">Poslovni plan kalkulator</h1>
+  <p class="page-sub" data-i18n="page.sub">Teretni željeznički prijevoznik — Slovenija → Italija. Promijenite parametre i generirajte PDF.</p>
+
+  <!-- HERO SUMMARY -->
+  <section class="hero-summary" id="hero-summary"></section>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="unos" onclick="showTab('unos')" data-i18n="tab.unos">Ulazni podaci</button>
+    <button class="tab" data-tab="resursi" onclick="showTab('resursi')" data-i18n="tab.resursi">Resursi</button>
+    <button class="tab" data-tab="troskovi" onclick="showTab('troskovi')" data-i18n="tab.troskovi">Troškovi</button>
+    <button class="tab" data-tab="prihodi" onclick="showTab('prihodi')" data-i18n="tab.prihodi">Prihodi i marža</button>
+    <button class="tab" data-tab="plan" onclick="showTab('plan')" data-i18n="tab.plan">Poslovni plan</button>
+  </div>
+
+  <!-- TAB 1: ULAZNI PODACI -->
+  <div id="tab-unos" class="panel active">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.opParams.title">Operativni parametri</div>
+          <div class="card-subtitle" data-i18n="card.opParams.sub">Osnovni podaci o prometu i strukturi vlakova</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.trainsMonthly">Vlakovi mjesečno (parovi)</label>
+          <input type="number" id="trains_monthly" value="20" min="1" max="200" oninput="calc()">
+          <div class="field-hint" data-i18n="field.trainsMonthly.hint">1 par = 1 puni + 1 prazni povrat</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.mixLight">Udio lakših vlakova (&lt;2200t vs 2200-2500t)</label>
+          <div class="slider-row">
+            <input type="range" id="mix_light" min="0" max="100" value="60" step="5" oninput="updMix(this.value)">
+            <span class="slider-val" id="mix_light_val">60%</span>
+          </div>
+          <div class="field-hint" id="mix_info">60% lakši (&lt;2200t) · 40% teži (2200-2500t)</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.emptyWeight">Težina praznog vlaka (t bruto)</label>
+          <input type="number" id="empty_weight" value="700" min="400" max="1200" oninput="calc()">
+          <div class="field-hint" data-i18n="field.emptyWeight.hint">Standardno ~700 t</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 20px;">
+        <div class="field">
+          <label class="field-label" data-i18n="field.kmFull">Duljina relacije Dobova → V. Opicina (km)</label>
+          <input type="number" id="km_full" value="361" min="1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.kmEmpty">Duljina povratne relacije (km)</label>
+          <input type="number" id="km_empty" value="234" min="1" oninput="calc()">
+          <div class="field-hint" data-i18n="field.kmEmpty.hint">V. Opicina → Dobova (Jesenice border)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.tariff.title">Tarife klijentima</div>
+          <div class="card-subtitle" data-i18n="card.tariff.sub">Prihod od prijevoza po vlaku</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.revFullLight">Cijena lakšeg vlaka klijentu (€)</label>
+          <input type="number" id="revenue_full_light" value="9650" min="0" step="50" oninput="calc()">
+          <div class="field-hint" data-i18n="field.revFullLight.hint">Lakši vlak (&lt;2200t) — naplata po punom pravcu</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.revFullHeavy">Cijena težeg vlaka klijentu (€)</label>
+          <input type="number" id="revenue_full_heavy" value="10000" min="0" step="50" oninput="calc()">
+          <div class="field-hint" data-i18n="field.revFullHeavy.hint">Teži vlak (2200-2500t) — naplata po punom pravcu</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.revEmpty">Cijena praznog povrata klijentu (€)</label>
+          <input type="number" id="revenue_empty" value="0" min="0" step="100" oninput="calc()">
+          <div class="field-hint" data-i18n="field.revEmpty.hint">0 = povrat nije naplaćen</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.trasaPrice.title">Cijene trase</div>
+          <div class="card-subtitle" data-i18n="card.trasaPrice.sub">Prema SŽ cjeniku (lokomotiva Vectron, R4 kategorija)</div>
+        </div>
+        <span class="badge badge-blue"><span class="badge-dot"></span><span data-i18n="badge.szInfra">SŽ Infrastruktura</span></span>
+      </div>
+
+      <div class="section-label" data-i18n="sec.fullTrainLight">Puni vlak lakši (&lt;2200t bruto) — Villa Opicina destination (361 km)</div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.trasaFullLight">Cijena trase lakši (€/smjer)</label>
+          <input type="number" id="trasa_full_light" value="450" step="0.01" oninput="calc()">
+          <div class="field-hint" data-i18n="field.trasaFullLight.hint">100€ ispod težeg vlaka</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.elChargeLight">El. naknada lakši (€/smjer)</label>
+          <input type="number" id="el_charge_light" value="800" step="1" oninput="calc()">
+          <div class="field-hint" data-i18n="field.elChargeLight.hint">100€ ispod težeg vlaka</div>
+        </div>
+        <div class="field"></div>
+      </div>
+
+      <div class="section-label" data-i18n="sec.fullTrainHeavy">Puni vlak teži (2200-2500t bruto) — Villa Opicina destination (361 km)</div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.trasaFullHeavy">Cijena trase teži (€/smjer)</label>
+          <input type="number" id="trasa_full_heavy" value="550" step="0.01" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.elChargeHeavy">El. naknada teži (€/smjer)</label>
+          <input type="number" id="el_charge_heavy" value="900" step="1" oninput="calc()">
+        </div>
+        <div class="field"></div>
+      </div>
+
+      <div class="section-label" data-i18n="sec.shared">Zajedničko (oba vlaka)</div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.priceStation">Cijena po postaji (€)</label>
+          <input type="number" id="price_station" value="13.27" step="0.01" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.numStations">Broj postaja</label>
+          <input type="number" id="num_stations" value="2" min="0" max="10" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.shuntingLj">Rangiranje Ljubljana Zalog (€)</label>
+          <input type="number" id="shunting_lj" value="2.29" step="0.01" oninput="calc()">
+        </div>
+      </div>
+
+      <div class="section-label" data-i18n="sec.emptyReturn">Prazni povrat — Dobova destination (234 km)</div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.trasaEmpty">Cijena trase praznog (€)</label>
+          <input type="number" id="trasa_empty" value="380" step="0.01" oninput="calc()">
+          <div class="field-hint" data-i18n="field.trasaEmpty.hint">~700t bruto = M3 kategorija</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.elChargeRet">El. naknada prazni (€/smjer)</label>
+          <input type="number" id="el_charge_ret" value="680" step="1" oninput="calc()">
+          <div class="field-hint" data-i18n="field.elChargeRet.hint">Tarifa: &lt;800t bruto = 680€</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.extraEmpty">Pristojbe povrat (€)</label>
+          <input type="number" id="extra_empty" value="0" step="0.01" oninput="calc()">
+          <div class="field-hint" data-i18n="field.extraEmpty.hint">Dodatni troškovi (rangiranje, postaje)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.labor.title">Troškovi najma i osoblja</div>
+          <div class="card-subtitle" data-i18n="card.labor.sub">Bruto plaće i operativni najam</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="field">
+          <label class="field-label" data-i18n="field.locoRent">Najam lokomotive (€/mj po lokomotivi)</label>
+          <input type="number" id="loco_rent" value="52000" min="0" step="500" oninput="calc()">
+          <div class="field-hint" data-i18n="field.locoRent.hint">Vectron / sl.</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.wageDriver">Bruto plaća strojovođe (€/mj)</label>
+          <input type="number" id="wage_driver" value="4750" min="0" oninput="calc()">
+          <div class="field-hint" data-i18n="field.wageDriver.hint">Prosjek (raspon 4500–5000 €)</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.wageInspector">Bruto plaća pregledača vagona (€/mj)</label>
+          <input type="number" id="wage_inspector" value="4500" min="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.wageMgmt">Bruto plaća uprave (€/mj)</label>
+          <input type="number" id="wage_mgmt" value="7000" min="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.wageOpsMgr">Bruto plaća voditelja operative (€/mj)</label>
+          <input type="number" id="wage_ops_mgr" value="6000" min="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label">Dispečer outsource (€/par vlakova)</label>
+          <input type="number" id="dispatch_cost" value="1000" min="0" oninput="calc()">
+        </div>
+        <div class="field">
+          <label class="field-label">Ostali fiksni troškovi (€/mj)</label>
+          <input type="number" id="other_fixed" value="2000" min="0" oninput="calc()">
+          <div class="field-hint">Najam ureda, uredski materijal, knjigovodstvo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: RESURSI -->
+  <div id="tab-resursi" class="panel">
+
+    <div class="alert alert-info" id="loko-analysis"></div>
+
+    <div class="grid-4" id="cards-resources" style="margin-bottom: 24px;"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.locoCalc.title">Lokomotive — kalkulacija</div>
+            <div class="card-subtitle" data-i18n="card.locoCalc.sub">Loko-dani potrebni za pokrivanje prometa</div>
+          </div>
+        </div>
+        <table class="tbl" id="loko-table"></table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.driversCalc.title">Strojovođe — kalkulacija</div>
+            <div class="card-subtitle" data-i18n="card.driversCalc.sub">Smjene i potrebno osoblje</div>
+          </div>
+        </div>
+        <table class="tbl" id="drivers-table"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.locoSupply.title">Logika opskrbe lokomotivama</div>
+          <div class="card-subtitle" data-i18n="card.locoSupply.sub">Vizualizacija prometa i potrebnih lokomotiva po dijelu pruge</div>
+        </div>
+      </div>
+      <div class="route-diagram">
+        <svg viewBox="0 0 800 240" class="route-svg">
+          <!-- Smjer label -->
+          <text x="40" y="22" fill="#9ca3b8" font-size="11" font-weight="600" letter-spacing="0.5" data-i18n="route.fullHead">PUNI VLAK · Dobova → V. Opicina · 2200/2500t bruto</text>
+
+          <!-- Track line -->
+          <line x1="40" y1="120" x2="760" y2="120" stroke="#3a4459" stroke-width="3" stroke-linecap="round"></line>
+
+          <!-- Stations -->
+          <g>
+            <circle cx="40" cy="120" r="9" fill="#4f8cff"></circle>
+            <text x="40" y="155" text-anchor="middle" fill="#e8eaf0" font-size="13" font-weight="600" data-i18n="route.dobova">Dobova</text>
+            <text x="40" y="172" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.dobovaSub">SI/HR border</text>
+          </g>
+          <g>
+            <circle cx="240" cy="120" r="6" fill="#9ca3b8"></circle>
+            <text x="240" y="100" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.ljubljana">Ljubljana</text>
+          </g>
+          <g>
+            <circle cx="420" cy="120" r="6" fill="#9ca3b8"></circle>
+            <text x="420" y="100" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.postojna">Postojna</text>
+          </g>
+          <g>
+            <circle cx="580" cy="120" r="6" fill="#9ca3b8"></circle>
+            <text x="580" y="100" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.sezana">Sežana</text>
+          </g>
+          <g>
+            <circle cx="760" cy="120" r="9" fill="#4f8cff"></circle>
+            <text x="760" y="155" text-anchor="middle" fill="#e8eaf0" font-size="13" font-weight="600" data-i18n="route.vOpicina">V. Opicina</text>
+            <text x="760" y="172" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.vOpicinaSub">Italija</text>
+          </g>
+
+          <!-- LJ-Sežana 2 lokomotive zone -->
+          <rect x="240" y="40" width="340" height="22" rx="4" fill="#3a2f1e" stroke="#fbbf24" stroke-width="1"></rect>
+          <text x="410" y="55" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600" data-i18n="route.fullBox">2 lokomotive (puni &gt;1600t)</text>
+
+          <!-- Loco icons -->
+          <g transform="translate(80, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+          </g>
+          <g transform="translate(280, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+            <rect x="40" y="0" width="36" height="20" rx="3" fill="#34d399"></rect>
+            <text x="58" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L2</text>
+          </g>
+          <g transform="translate(462, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+            <rect x="40" y="0" width="36" height="20" rx="3" fill="#34d399"></rect>
+            <text x="58" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L2</text>
+          </g>
+          <g transform="translate(620, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+          </g>
+
+          <!-- Vrijeme -->
+          <text x="400" y="210" text-anchor="middle" fill="#9ca3b8" font-size="12" data-i18n="route.fullTime">Prosjek vožnje: 12 h jedan smjer · Loko-dani po paru (vlakovi): 1.15 · Aktivno (×1.5 light/wait): 1.725</text>
+        </svg>
+
+        <svg viewBox="0 0 800 240" class="route-svg" style="margin-top: 16px;">
+          <!-- Smjer label -->
+          <text x="40" y="22" fill="#9ca3b8" font-size="11" font-weight="600" letter-spacing="0.5" data-i18n="route.emptyHead">PRAZNI POVRAT · V. Opicina → Dobova · ~700t bruto</text>
+
+          <!-- Track line -->
+          <line x1="40" y1="120" x2="760" y2="120" stroke="#3a4459" stroke-width="3" stroke-linecap="round"></line>
+
+          <!-- Stations (isti raspored, ali smjer je suprotan) -->
+          <g>
+            <circle cx="40" cy="120" r="9" fill="#4f8cff"></circle>
+            <text x="40" y="155" text-anchor="middle" fill="#e8eaf0" font-size="13" font-weight="600" data-i18n="route.dobova">Dobova</text>
+            <text x="40" y="172" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.dobovaSub">SI/HR border</text>
+          </g>
+          <g>
+            <circle cx="240" cy="120" r="6" fill="#9ca3b8"></circle>
+            <text x="240" y="100" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.ljubljana">Ljubljana</text>
+          </g>
+          <g>
+            <circle cx="420" cy="120" r="6" fill="#9ca3b8"></circle>
+            <text x="420" y="100" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.postojna">Postojna</text>
+          </g>
+          <g>
+            <circle cx="580" cy="120" r="6" fill="#9ca3b8"></circle>
+            <text x="580" y="100" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.sezana">Sežana</text>
+          </g>
+          <g>
+            <circle cx="760" cy="120" r="9" fill="#4f8cff"></circle>
+            <text x="760" y="155" text-anchor="middle" fill="#e8eaf0" font-size="13" font-weight="600" data-i18n="route.vOpicina">V. Opicina</text>
+            <text x="760" y="172" text-anchor="middle" fill="#9ca3b8" font-size="11" data-i18n="route.vOpicinaSub">Italija</text>
+          </g>
+
+          <!-- Smjer kretanja: V. Opicina → Dobova (strelica ispod linije) -->
+          <g transform="translate(400, 138)">
+            <line x1="60" y1="0" x2="-60" y2="0" stroke="#34d399" stroke-width="1.5"></line>
+            <polygon points="-60,0 -54,-4 -54,4" fill="#34d399"></polygon>
+            <text x="0" y="18" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600" data-i18n="route.direction">smjer kretanja</text>
+          </g>
+
+          <!-- 1 lokomotiva cijelim putem zone -->
+          <rect x="40" y="40" width="720" height="22" rx="4" fill="#1e3a2f" stroke="#34d399" stroke-width="1"></rect>
+          <text x="400" y="55" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600" data-i18n="route.emptyBox">1 lokomotiva cijelim putem (~700t bruto &lt; 1600t)</text>
+
+          <!-- Loco icons (po jedna L1 na svakom segmentu) -->
+          <g transform="translate(140, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+          </g>
+          <g transform="translate(312, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+          </g>
+          <g transform="translate(482, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+          </g>
+          <g transform="translate(652, 100)">
+            <rect x="0" y="0" width="36" height="20" rx="3" fill="#4f8cff"></rect>
+            <text x="18" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="600">L1</text>
+          </g>
+
+          <!-- Vrijeme -->
+          <text x="400" y="210" text-anchor="middle" fill="#9ca3b8" font-size="12" data-i18n="route.emptyTime">Prosjek vožnje: 12 h jedan smjer · Bez težinskih ograničenja na pruzi</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: TROŠKOVI -->
+  <div id="tab-troskovi" class="panel">
+    <div class="grid-4" id="cards-cost" style="margin-bottom: 24px;"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.fixed.title">Fiksni troškovi</div>
+            <div class="card-subtitle" data-i18n="card.fixed.sub">Ne ovise o broju vlakova</div>
+          </div>
+        </div>
+        <table class="tbl" id="fixed-costs-table"></table>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.var.title">Varijabilni troškovi</div>
+            <div class="card-subtitle" data-i18n="card.var.sub">Ovise o broju vlakova</div>
+          </div>
+        </div>
+        <table class="tbl" id="var-costs-table"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.costStructure.title">Struktura troškova</div>
+          <div class="card-subtitle" data-i18n="card.costStructure.sub">Mjesečna distribucija po kategoriji</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="costChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: PRIHODI -->
+  <div id="tab-prihodi" class="panel">
+    <div class="grid-4" id="cards-revenue" style="margin-bottom: 24px;"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.trasaFullDetail.title">Trasa puni vlak — razrada</div>
+            <div class="card-subtitle" data-i18n="card.trasaFullDetail.sub">Prosjek za miks 2200/2500t</div>
+          </div>
+        </div>
+        <table class="tbl" id="trasa-full-table"></table>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.trasaEmptyDetail.title">Trasa prazni povrat — razrada</div>
+            <div class="card-subtitle" data-i18n="card.trasaEmptyDetail.sub">M3 kategorija</div>
+          </div>
+        </div>
+        <table class="tbl" id="trasa-empty-table"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.revVsCost.title">Prihod vs Troškovi (godišnja projekcija)</div>
+          <div class="card-subtitle" data-i18n="card.revVsCost.sub">12-mjesečna projekcija s konstantnim parametrima</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: PLAN -->
+  <div id="tab-plan" class="panel">
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.pl.title">Račun dobiti i gubitka (mjesečno)</div>
+            <div class="card-subtitle" data-i18n="card.pl.sub">Sažetak prihoda i rashoda</div>
+          </div>
+        </div>
+        <table class="tbl" id="pl-table"></table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="card.req.title">Potrebni resursi</div>
+            <div class="card-subtitle" data-i18n="card.req.sub">Operativna struktura tvrtke</div>
+          </div>
+        </div>
+        <table class="tbl" id="resources-table"></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.sens.title">Analiza osjetljivosti — Dobit po broju vlakova</div>
+          <div class="card-subtitle" data-i18n="card.sens.sub">Kako dobit/gubitak ovisi o volumenu prometa</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height: 280px;">
+        <canvas id="sensitivityChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.annual.title">Godišnja projekcija</div>
+          <div class="card-subtitle" data-i18n="card.annual.sub">12 × mjesečni rezultat</div>
+        </div>
+      </div>
+      <table class="tbl" id="annual-table"></table>
+    </div>
+
+    <div style="text-align: center; padding: 20px 0;">
+      <button class="btn btn-primary" onclick="exportPDF()" style="font-size: 15px; padding: 12px 24px;">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span data-i18n="btn.generateFull">Generiraj kompletni PDF poslovni plan</span>
+      </button>
+      <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 10px;" data-i18n="btn.generateNote">
+        PDF se generira lokalno u pregledniku — bez slanja podataka.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" data-i18n="footer">
+    Logic Rail · Poslovni plan kalkulator · v1.0 · Sva izračunavanja se vrše lokalno u pregledniku
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
