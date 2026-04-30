@@ -777,13 +777,23 @@ input[type="range"]::-moz-range-thumb {
           <input type="number" id="wage_ops_mgr" value="6000" min="0" oninput="calc()">
         </div>
         <div class="field">
-          <label class="field-label">Dispečer outsource (€/par vlakova)</label>
-          <input type="number" id="dispatch_cost" value="1000" min="0" oninput="calc()">
+          <label class="field-label" data-i18n="field.dispatchCost">Dispečer outsource (€/par vlakova)</label>
+          <input type="number" id="dispatch_cost" value="500" min="0" oninput="calc()">
         </div>
         <div class="field">
-          <label class="field-label">Ostali fiksni troškovi (€/mj)</label>
+          <label class="field-label" data-i18n="field.carCost">Automobili, prateći troškovi (€/par vlakova)</label>
+          <input type="number" id="car_cost" value="0" min="0" oninput="calc()">
+          <div class="field-hint" data-i18n="field.carCost.hint">Autoceste, gorivo, servisi, osiguranje vozila</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.otherFixed">Ostali fiksni troškovi (€/mj)</label>
           <input type="number" id="other_fixed" value="2000" min="0" oninput="calc()">
-          <div class="field-hint">Najam ureda, uredski materijal, knjigovodstvo</div>
+          <div class="field-hint" data-i18n="field.otherFixed.hint">Najam ureda, uredski materijal, knjigovodstvo</div>
+        </div>
+        <div class="field">
+          <label class="field-label" data-i18n="field.insuranceCost">Polica osiguranja prijevoznika (€/mj)</label>
+          <input type="number" id="insurance_cost" value="2500" min="0" oninput="calc()">
+          <div class="field-hint" data-i18n="field.insuranceCost.hint">30.000 € godišnje = 2.500 € / mj</div>
         </div>
       </div>
     </div>

@@ -70,8 +70,10 @@ const DEFAULTS = {
   wage_inspector: 4500,
   wage_mgmt: 7000,
   wage_ops_mgr: 6000,
-  dispatch_cost: 1000,
-  other_fixed: 2000
+  dispatch_cost: 500,
+  car_cost: 0,
+  other_fixed: 2000,
+  insurance_cost: 2500
 };
 
 /* ---------- HELPERS ---------- */
@@ -153,7 +155,9 @@ function calc() {
   const wageMgmt = v('wage_mgmt');
   const wageOpsMgr = v('wage_ops_mgr');
   const dispatchCost = v('dispatch_cost');
+  const carCost = v('car_cost');
   const otherFixed = v('other_fixed');
+  const insuranceCost = v('insurance_cost');
 
   // ----- TRASA CALCULATIONS -----
   const avgTrasaFullBase = trasaFullLight * mixLight + trasaFullHeavy * mixHeavy;
@@ -209,11 +213,12 @@ function calc() {
   const driverWageMonthly = driversNeeded * wageDriver;
   const inspectorWageMonthly = inspectorsNeeded * wageInspector;
   const dispatchMonthly = trains * dispatchCost;
+  const carMonthly = trains * carCost;
 
   // FIKSNI - ne ovise o broju vlakova
-  const fixedCosts = wageMgmt + wageOpsMgr + otherFixed;
+  const fixedCosts = wageMgmt + wageOpsMgr + otherFixed + insuranceCost;
   // VARIJABILNI - ovise o broju vlakova (operativni: pregledači sad scale-aju s prometom)
-  const varCosts = locoRentMonthly + totalTrasaMonthly + driverWageMonthly + inspectorWageMonthly + dispatchMonthly;
+  const varCosts = locoRentMonthly + totalTrasaMonthly + driverWageMonthly + inspectorWageMonthly + dispatchMonthly + carMonthly;
 
   const totalCosts = fixedCosts + varCosts;
 
@@ -227,7 +232,7 @@ function calc() {
   const costPerPair = totalCosts / Math.max(trains, 1);
   const breakEven = calcBreakEven({
     revFull, revEmpty, fixedCosts, locoRent, totalTrasaFull, totalTrasaEmpty,
-    wageDriver, wageInspector, dispatchCost, locoAvailDays, locoDaysActivePerPair, shiftsPerDriverPerMonth,
+    wageDriver, wageInspector, dispatchCost, carCost, locoAvailDays, locoDaysActivePerPair, shiftsPerDriverPerMonth,
     inspectorShiftsPerPair, inspectorShiftsPerMonth
   });
 
@@ -238,7 +243,7 @@ function calc() {
       trasaFullLight, trasaFullHeavy, trasaEmptyBase, priceStation, numStations,
       shuntingLj, elChargeLight, elChargeHeavy, elCharge, elChargeRet, extraEmpty,
       revFullLight, revFullHeavy, revFull, revEmpty,
-      locoRent, wageDriver, wageInspector, wageMgmt, wageOpsMgr, dispatchCost, otherFixed
+      locoRent, wageDriver, wageInspector, wageMgmt, wageOpsMgr, dispatchCost, carCost, otherFixed, insuranceCost
     },
     calc: {
       avgTrasaFullBase, totalTrasaFull, totalTrasaEmpty, trasaPerPair,
@@ -247,7 +252,7 @@ function calc() {
       totalDrivingShifts, driversNeeded, shiftsPerDriverPerMonth, inspectorsNeeded,
       inspectorShiftsPerPair, inspectorShiftsPerMonth,
       totalTrasaFullMonthly, totalTrasaEmptyMonthly, totalTrasaMonthly,
-      driverWageMonthly, inspectorWageMonthly, dispatchMonthly,
+      driverWageMonthly, inspectorWageMonthly, dispatchMonthly, carMonthly,
       fixedCosts, varCosts, totalCosts,
       revenueMonthly, revenuePerPair, profit, margin, costPerPair, breakEven,
       stationCostFull, elFull, elEmpty
@@ -276,7 +281,8 @@ function calcBreakEven(p) {
     const insp = Math.max(1, Math.ceil(n * p.inspectorShiftsPerPair / p.inspectorShiftsPerMonth));
     const iwm = insp * p.wageInspector;
     const disp = n * p.dispatchCost;
-    const tc = lrm + ttm + dwm + iwm + disp + p.fixedCosts;
+    const car = n * p.carCost;
+    const tc = lrm + ttm + dwm + iwm + disp + car + p.fixedCosts;
     const rev = n * (p.revFull + p.revEmpty);
     if (rev >= tc) return n;
   }
@@ -441,6 +447,7 @@ function renderCosts() {
     <tr><td>${t('cst.fc.mgmt')}</td><td>${fmtEurK(i.wageMgmt)}</td></tr>
     <tr><td>${t('cst.fc.opsMgr')}</td><td>${fmtEurK(i.wageOpsMgr)}</td></tr>
     <tr><td>${t('cst.fc.other')}</td><td>${fmtEurK(i.otherFixed)}</td></tr>
+    <tr><td>${t('cst.fc.insurance')}</td><td>${fmtEurK(i.insuranceCost)}</td></tr>
     <tr class="total"><td>${t('cst.fc.total')}</td><td>${fmtEurK(d.fixedCosts)}</td></tr>
   `;
 
@@ -453,6 +460,7 @@ function renderCosts() {
     <tr><td>${t('cst.vc.drivers', { n: d.driversNeeded, amount: fmtEurK(i.wageDriver) })}</td><td>${fmtEurK(d.driverWageMonthly)}</td></tr>
     <tr><td>${t('cst.vc.inspectors', { n: d.inspectorsNeeded, amount: fmtEurK(i.wageInspector) })}</td><td>${fmtEurK(d.inspectorWageMonthly)}</td></tr>
     <tr><td>${t('cst.vc.dispatch', { n: i.trains, amount: fmtEurK(i.dispatchCost) })}</td><td>${fmtEurK(d.dispatchMonthly)}</td></tr>
+    <tr><td>${t('cst.vc.car', { n: i.trains, amount: fmtEurK(i.carCost) })}</td><td>${fmtEurK(d.carMonthly)}</td></tr>
     <tr class="total"><td>${t('cst.vc.total')}</td><td>${fmtEurK(d.varCosts)}</td></tr>
   `;
 }
@@ -520,10 +528,12 @@ function renderPlan() {
     <tr><td>${t('plan.pl.trasa')}</td><td>${fmtEurK(d.totalTrasaMonthly)}</td></tr>
     <tr><td>${t('plan.pl.drivers', { n: d.driversNeeded })}</td><td>${fmtEurK(d.driverWageMonthly)}</td></tr>
     <tr><td>${t('plan.pl.dispatch')}</td><td>${fmtEurK(d.dispatchMonthly)}</td></tr>
+    <tr><td>${t('plan.pl.car')}</td><td>${fmtEurK(d.carMonthly)}</td></tr>
     <tr><td>${t('plan.pl.inspectors', { n: d.inspectorsNeeded })}</td><td>${fmtEurK(d.inspectorWageMonthly)}</td></tr>
     <tr><td>${t('plan.pl.mgmt')}</td><td>${fmtEurK(i.wageMgmt)}</td></tr>
     <tr><td>${t('plan.pl.opsMgr')}</td><td>${fmtEurK(i.wageOpsMgr)}</td></tr>
     <tr><td>${t('plan.pl.otherFixed')}</td><td>${fmtEurK(i.otherFixed)}</td></tr>
+    <tr><td>${t('plan.pl.insurance')}</td><td>${fmtEurK(i.insuranceCost)}</td></tr>
     <tr class="total"><td>${t('plan.pl.totalExp')}</td><td>${fmtEurK(d.totalCosts)}</td></tr>
     <tr class="total ${d.profit >= 0 ? 'profit' : 'loss'}"><td>${t('plan.pl.profitLoss')}</td><td>${fmtEurK(d.profit)}</td></tr>
     <tr class="subtle"><td>${t('plan.pl.ebitda')}</td><td>${fmt(d.margin, 1)}%</td></tr>
@@ -576,7 +586,7 @@ function renderCharts() {
     costChartInst = new Chart(costCtx, {
       type: 'doughnut',
       data: {
-        labels: [t('chart.cost.locoRent'), t('chart.cost.trasaFull'), t('chart.cost.trasaEmpty'), t('chart.cost.drivers'), t('chart.cost.dispatcher'), t('chart.cost.mgmt'), t('chart.cost.opsMgr'), t('chart.cost.inspectors'), t('chart.cost.other')],
+        labels: [t('chart.cost.locoRent'), t('chart.cost.trasaFull'), t('chart.cost.trasaEmpty'), t('chart.cost.drivers'), t('chart.cost.dispatcher'), t('chart.cost.car'), t('chart.cost.mgmt'), t('chart.cost.opsMgr'), t('chart.cost.inspectors'), t('chart.cost.other'), t('chart.cost.insurance')],
         datasets: [{
           data: [
             Math.round(d.locoRentMonthly),
@@ -584,12 +594,14 @@ function renderCharts() {
             Math.round(d.totalTrasaEmptyMonthly),
             Math.round(d.driverWageMonthly),
             Math.round(d.dispatchMonthly),
+            Math.round(d.carMonthly),
             Math.round(i.wageMgmt),
             Math.round(i.wageOpsMgr),
             Math.round(d.inspectorWageMonthly),
-            Math.round(i.otherFixed)
+            Math.round(i.otherFixed),
+            Math.round(i.insuranceCost)
           ],
-          backgroundColor: ['#4f8cff', '#6ba3ff', '#a3c5ff', '#34d399', '#0F6E56', '#fbbf24', '#d97706', '#f59e0b', '#6b7390'],
+          backgroundColor: ['#4f8cff', '#6ba3ff', '#a3c5ff', '#34d399', '#0F6E56', '#059669', '#fbbf24', '#d97706', '#f59e0b', '#6b7390', '#8b5cf6'],
           borderColor: '#1a2030',
           borderWidth: 2
         }]
@@ -681,7 +693,8 @@ function renderCharts() {
       const insp = Math.max(1, Math.ceil(n * d.inspectorShiftsPerPair / d.inspectorShiftsPerMonth));
       const iwm = insp * i.wageInspector;
       const disp = n * i.dispatchCost;
-      const tc = lrm + ttm + dwm + iwm + disp + d.fixedCosts;
+      const car = n * i.carCost;
+      const tc = lrm + ttm + dwm + iwm + disp + car + d.fixedCosts;
       const rev = n * (i.revFull + i.revEmpty);
       return Math.round(rev - tc);
     });
@@ -1023,6 +1036,7 @@ async function exportPDF() {
       [t('pdf.s3.fc2'), fmtEurK(i.wageOpsMgr)],
       [t('pdf.s3.fc3', { n: d.inspectorsNeeded, amount: fmtEurK(i.wageInspector) }), fmtEurK(d.inspectorWageMonthly)],
       [t('pdf.s3.fc4'), fmtEurK(i.otherFixed)],
+      [t('pdf.s3.fc_ins'), fmtEurK(i.insuranceCost)],
       [t('pdf.s3.fc5'), fmtEurK(d.fixedCosts)]
     ],
     theme: 'striped',
@@ -1049,6 +1063,7 @@ async function exportPDF() {
       [t('pdf.s3.vc3', { n: i.trains, amount: fmtEur(d.totalTrasaEmpty) }), fmtEurK(d.totalTrasaEmptyMonthly)],
       [t('pdf.s3.vc4', { n: d.driversNeeded, amount: fmtEurK(i.wageDriver) }), fmtEurK(d.driverWageMonthly)],
       [t('pdf.s3.vc5', { n: i.trains, amount: fmtEurK(i.dispatchCost) }), fmtEurK(d.dispatchMonthly)],
+      [t('pdf.s3.vc_car', { n: i.trains, amount: fmtEurK(i.carCost) }), fmtEurK(d.carMonthly)],
       [t('pdf.s3.vc6'), fmtEurK(d.varCosts)]
     ],
     theme: 'striped',
@@ -1056,7 +1071,7 @@ async function exportPDF() {
     styles: { font: 'Inter', fontSize: 9, cellPadding: 3 },
     columnStyles: { 1: { halign: 'right' } },
     didParseCell: (data) => {
-      if (data.row.index === 5 && data.section === 'body') {
+      if (data.row.index === 6 && data.section === 'body') {
         data.cell.styles.fillColor = [240, 245, 252];
         data.cell.styles.fontStyle = 'bold';
         data.cell.styles.textColor = [31, 64, 145];
@@ -1143,10 +1158,12 @@ async function exportPDF() {
   plBody.push([t('pdf.s4.trasa'), fmtEurK(d.totalTrasaMonthly)]);
   plBody.push([t('pdf.s4.drivers', { n: d.driversNeeded }), fmtEurK(d.driverWageMonthly)]);
   plBody.push([t('pdf.s4.dispatch'), fmtEurK(d.dispatchMonthly)]);
+  plBody.push([t('pdf.s4.car'), fmtEurK(d.carMonthly)]);
   plBody.push([t('pdf.s4.inspectors', { n: d.inspectorsNeeded }), fmtEurK(d.inspectorWageMonthly)]);
   plBody.push([t('pdf.s4.mgmt'), fmtEurK(i.wageMgmt)]);
   plBody.push([t('pdf.s4.opsMgr'), fmtEurK(i.wageOpsMgr)]);
   plBody.push([t('pdf.s4.otherFixed'), fmtEurK(i.otherFixed)]);
+  plBody.push([t('pdf.s4.insurance'), fmtEurK(i.insuranceCost)]);
   plBody.push([{ content: t('pdf.s4.totalExp'), styles: { fontStyle: 'bold' } }, { content: fmtEurK(d.totalCosts), styles: { fontStyle: 'bold' } }]);
   plBody.push([
     { content: t('pdf.s4.profitLoss'), styles: { fontStyle: 'bold', fontSize: 11, fillColor: isProfit ? [220, 245, 230] : [250, 230, 230], textColor: isProfit ? [30, 130, 80] : [180, 50, 50] } },
@@ -1237,7 +1254,8 @@ async function exportPDF() {
     const insp = Math.max(1, Math.ceil(n * d.inspectorShiftsPerPair / d.inspectorShiftsPerMonth));
     const iwm = insp * i.wageInspector;
     const disp = n * i.dispatchCost;
-    const tc = lrm + ttm + dwm + iwm + disp + d.fixedCosts;
+    const car = n * i.carCost;
+    const tc = lrm + ttm + dwm + iwm + disp + car + d.fixedCosts;
     const rev = n * (i.revFull + i.revEmpty);
     const p = rev - tc;
     return [String(n), fmtEurK(rev), fmtEurK(tc), fmtEurK(p), p >= 0 ? t('pdf.statusProfit') : t('pdf.statusLoss')];
@@ -1383,7 +1401,9 @@ async function exportPDF() {
       [t('pdf.s6.l3'), fmtEurK(i.wageInspector)],
       [t('pdf.s6.l4'), fmtEurK(i.wageMgmt)],
       [t('pdf.s6.l5'), fmtEurK(i.dispatchCost)],
-      [t('pdf.s6.l6'), fmtEurK(i.otherFixed)]
+      [t('pdf.s6.l_car'), fmtEurK(i.carCost)],
+      [t('pdf.s6.l6'), fmtEurK(i.otherFixed)],
+      [t('pdf.s6.l_ins'), fmtEurK(i.insuranceCost)]
     ],
     theme: 'plain',
     styles: { font: 'Inter', fontSize: 9, cellPadding: 2.5 },

@@ -85,6 +85,17 @@ const hrKeys = new Set(Object.keys(I18N.hr));
 "
 ```
 
+### i18n obligation — new text must be translated immediately
+
+**Any time new user-visible text is added to the app — a UI label, card title, hint, tab name, PDF string, chart label, tooltip, or any other copy — it must be added to all 5 language dictionaries in `i18n.js` in the same change.** Never add a new key to only `hr` (or any single language) and leave the rest for later.
+
+Steps for adding a new translatable string:
+1. Choose a key following the existing naming convention (e.g. `field.newThing`, `pdf.s3.newLine`, `card.revenue.hint`).
+2. Add the key with a value for **all 5 languages**: `hr`, `en`, `it`, `sl`, `sr`.
+3. In `index.html`: add `data-i18n="your.key"` attribute to the element (for static HTML text).
+4. In `app.js`: use `t('your.key')` or `t('your.key', { var: value })` (for dynamically rendered content).
+5. Run the parity check above to confirm no language is missing the key.
+
 ### Key i18n conventions
 
 - `pdf.*` – keys used only in PDF generation
