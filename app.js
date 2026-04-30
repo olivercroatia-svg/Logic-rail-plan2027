@@ -47,7 +47,7 @@ function setLang(lang) {
 
 /* ---------- DEFAULT VALUES ---------- */
 const DEFAULTS = {
-  trains_monthly: 20,
+  trains_monthly: 31,
   mix_light: 60,
   empty_weight: 700,
   km_full: 361,
