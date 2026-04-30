@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**Logic Rail – Poslovni plan kalkulator**: A single-page static web app (no framework, no build step, no npm) for a Slovenian freight rail operator. Calculates costs, revenues, and generates a 7-page business plan PDF. Route: Dobova (SI/HR border) ↔ Villa Opicina (Italy).
+**Logic Rail – Poslovni plan kalkulator**: A single-page static web app (no framework, no build step, no npm) for a Slovenian freight rail operator. Calculates costs, revenues, projects 24-month cashflow, and generates a 12-page business plan PDF. Route: Dobova (SI/HR border) ↔ Villa Opicina (Italy).
 
 ## Running the app
 
@@ -29,7 +29,7 @@ This reads `Inter-Regular.ttf` and `Inter-Bold.ttf` and writes `Inter-Regular-no
 ```
 index.html             – All CSS + UI structure; data-i18n attributes on every translatable element
 app.js                 – All logic: calculations, DOM renderers, Chart.js, jsPDF export, i18n helpers
-i18n.js                – Translation dictionary: I18N object, 5 langs × 431 keys
+i18n.js                – Translation dictionary: I18N object, 5 langs × 486 keys
 Inter-Regular-normal.js – Base64-encoded Inter Regular font (auto-registered into jsPDF at load time)
 Inter-Bold-bold.js      – Base64-encoded Inter Bold font (auto-registered into jsPDF at load time)
 build-fonts.js         – One-shot script: converts Inter TTF → jsPDF font JS files
@@ -38,9 +38,50 @@ build-fonts.js         – One-shot script: converts Inter TTF → jsPDF font JS
 ### Data flow
 
 1. User changes input → `oninput="calc()"` → `calc()` computes everything, saves to `lastData`
-2. `calc()` calls all renderers: `renderHero()`, `renderResources()`, `renderCosts()`, `renderRevenue()`, `renderPlan()`, `renderCharts()`
-3. All renderers read from `lastData.calc` and `lastData.inputs`; they write translated HTML via `t()` calls
-4. PDF button → `exportPDF()` reads `lastData` and builds a 7-page jsPDF document, also fully translated
+2. `calc()` calls `calcCashflow()` (writes `lastData.cashflow`), then all renderers: `renderHero()`, `renderResources()`, `renderCosts()`, `renderRevenue()`, `renderPlan()`, `renderCashflow()`, `renderCharts()`
+3. All renderers read from `lastData.calc`, `lastData.inputs`, and `lastData.cashflow`; they write translated HTML via `t()` calls
+4. PDF button → `exportPDF()` reads `lastData` and builds a 9-page jsPDF document, also fully translated
+
+### Tabs (UI)
+
+| # | Tab | Panel id | Content |
+|---|-----|----------|---------|
+| 1 | Ulazni podaci | `tab-unos` | All input forms |
+| 2 | Resursi | `tab-resursi` | Locomotive/driver/inspector calculations + route SVGs |
+| 3 | Troškovi | `tab-troskovi` | Fixed/variable cost tables + cost doughnut chart |
+| 4 | Prihodi i marža | `tab-prihodi` | Trasa breakdowns + revenue vs cost chart |
+| 5 | Poslovni plan | `tab-plan` | P&L + resources + sensitivity chart + annual projection |
+| 6 | Tijek novca (Cashflow) | `tab-cashflow` | 24-month cashflow projection: alert + 4 KPI tiles + mixed chart (bar inflow/outflow + line cumulative) + 25-row table |
+
+### Cashflow model (`calcCashflow()` in [app.js])
+
+- **t=0 (initial outlay):** `3 × locoRent × locoNeeded` — covers 2-month deposit + advance rent for M1, per locomotive
+- **Revenue:** collected 30 days after service → revenue earned in month N appears as inflow in month N+1 (M1 inflow = 0)
+- **Wages** (drivers + inspectors + mgmt + ops mgr): 10 days after month end → wages for month N paid in month N+1 (M1 wages payment = 0)
+- **Loco rent:** paid in advance for current month — M1 already covered by initial outlay, so M1 rent outflow = 0; M2-M24 = `locoRentMonthly`
+- **Track access (trasa) + dispatcher:** invoiced after month end with 30-day terms → expensed in N+1
+- **Insurance, other fixed, vehicles:** paid in current month
+- **2-month deposit stays tied up** (refunded at end of contract — outside the 24-month window)
+- Returns `{ initialOutlay, rows[24], minBalance, minMonth, endBalance, breakevenMonth }`
+
+### PDF structure (12 pages)
+
+| Page | Section | Content |
+|------|---------|---------|
+| 1 | Cover | Brand block, KPIs, executive summary |
+| 2 | s1 — Uvod | Company, ops model, technical specs, loco logic + 2 route SVGs |
+| 3 | s2 — Resursi | Resources table + loco/driver calculation tables |
+| 4 | s3 — Troškovi | Fixed + variable cost tables + trasa breakdown |
+| 5 | Cost chart | Doughnut: cost structure |
+| 6 | s4 — P&L | Revenue + expense lines + annual projection + per-pair margin |
+| 7 | Revenue chart | Bar: revenue vs costs |
+| 8 | s5 — Sensitivity | Sensitivity table + risks + conclusion |
+| 9 | Sensitivity chart | Bar: profit by trains/month |
+| 10 | Cashflow page A | Intro + 4 KPIs (initial, min, breakeven, end) + cashflow chart |
+| 11 | Cashflow page B | Assumptions bullets + 25-row cashflow table (initial + 24 months) |
+| 12 | s6 — Ulazni params | All input parameter values |
+
+Page numbering uses a `pageNum++` counter — when adding/removing pages, the footer numbers update automatically.
 
 ### i18n system
 
@@ -98,10 +139,11 @@ Steps for adding a new translatable string:
 
 ### Key i18n conventions
 
-- `pdf.*` – keys used only in PDF generation
+- `pdf.*` – keys used only in PDF generation (sections `pdf.s1` through `pdf.s6` for original chapters, `pdf.s_cf` for cashflow chapter)
 - `field.*` – form field labels and hints
 - `card.*.title` / `card.*.sub` – card headers
 - `chart.*` – chart labels and tooltips
 - `route.*` – SVG route diagram texts
 - `plan.*` – P&L and resources tables in the Plan tab
+- `cf.*` – cashflow tab UI (alert assumptions, KPI tiles, table columns/rows, chart legend)
 - Template variables use `{name}` syntax: `t('pdf.s3.fc3', { n: d.inspectorsNeeded, amount: fmtEurK(i.wageInspector) })`

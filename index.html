@@ -371,6 +371,16 @@ input[type="range"]::-moz-range-thumb {
 .tbl tr.loss td { color: var(--red); }
 .tbl tr.subtle td { color: var(--text-secondary); font-size: 12px; }
 
+/* Cashflow table — multiple numeric columns */
+#cashflow-table td.num {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+#cashflow-table tr.head td.num { font-family: inherit; font-weight: 600; }
+#cashflow-table { font-size: 12px; }
+.cf-table-wrap { overflow-x: auto; max-height: 560px; overflow-y: auto; }
+
 /* Badges */
 .badge {
   display: inline-flex;
@@ -599,6 +609,7 @@ input[type="range"]::-moz-range-thumb {
     <button class="tab" data-tab="troskovi" onclick="showTab('troskovi')" data-i18n="tab.troskovi">Troškovi</button>
     <button class="tab" data-tab="prihodi" onclick="showTab('prihodi')" data-i18n="tab.prihodi">Prihodi i marža</button>
     <button class="tab" data-tab="plan" onclick="showTab('plan')" data-i18n="tab.plan">Poslovni plan</button>
+    <button class="tab" data-tab="cashflow" onclick="showTab('cashflow')" data-i18n="tab.cashflow">Tijek novca</button>
   </div>
 
   <!-- TAB 1: ULAZNI PODACI -->
@@ -1098,8 +1109,40 @@ input[type="range"]::-moz-range-thumb {
     </div>
   </div>
 
+  <!-- TAB 6: TIJEK NOVCA (CASHFLOW) -->
+  <div id="tab-cashflow" class="panel">
+
+    <div class="alert alert-info" id="cf-alert"></div>
+
+    <div class="grid-4" id="cards-cashflow" style="margin-bottom: 24px;"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.cashflow.chartTitle">Tijek novca — grafički prikaz</div>
+          <div class="card-subtitle" data-i18n="card.cashflow.chartSub">Priliv (zeleno) vs odliv (crveno) i kumulativno stanje (plavo)</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height: 360px;">
+        <canvas id="cashflowChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" data-i18n="card.cashflow.title">Tijek novca po mjesecima</div>
+          <div class="card-subtitle" data-i18n="card.cashflow.sub">Projekcija na 24 mjeseca uz realne uvjete naplate i plaćanja</div>
+        </div>
+      </div>
+      <div class="cf-table-wrap">
+        <table class="tbl" id="cashflow-table"></table>
+      </div>
+    </div>
+  </div>
+
   <div class="footer" data-i18n="footer">
-    Logic Rail · Poslovni plan kalkulator · v1.0 · Sva izračunavanja se vrše lokalno u pregledniku
+    Logic Rail · Poslovni plan kalkulator · v1.1 · Sva izračunavanja se vrše lokalno u pregledniku
   </div>
 </main>
 

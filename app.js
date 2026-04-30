@@ -3,7 +3,7 @@
    Sva logika izračuna, vizualizacije i PDF generiranja
    ========================================================================= */
 
-let costChartInst, revChartInst, sensChartInst;
+let costChartInst, revChartInst, sensChartInst, cfChartInst;
 let lastData = null;
 let currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem('lr_lang')) || 'hr';
 if (!I18N[currentLang]) currentLang = 'hr';
@@ -259,13 +259,78 @@ function calc() {
     }
   };
 
+  // ===== CASHFLOW (24-month projection) =====
+  lastData.cashflow = calcCashflow();
+
   // ===== UI UPDATES =====
   renderHero();
   renderResources();
   renderCosts();
   renderRevenue();
   renderPlan();
+  renderCashflow();
   renderCharts();
+}
+
+/* =========================================================================
+   CASHFLOW — 24-mjesečna projekcija s realnim vremenskim razmacima
+   - Početno stanje (t=0): depozit (2 × locoRent po loko) + najam unaprijed za M1
+   - Prihodi: naplaćeni 30 dana nakon usluge → prihod iz mj N stiže u mj N+1
+   - Plaće: 10 dana nakon kraja mjeseca → trošak mj N plaća se u mj N+1
+   - Najam loko: u tekućem mjesecu (M1 već pokriven inicijalom, M2+ svaki mj)
+   - Trase i dispečer: 30 dana nakon mjeseca usluge → mj N → mj N+1
+   - Osiguranje, ostali fiksni, automobili: u tekućem mjesecu
+   ========================================================================= */
+function calcCashflow() {
+  const d = lastData.calc;
+  const i = lastData.inputs;
+  const months = 24;
+
+  const revM       = d.revenueMonthly;
+  const wagesM     = d.driverWageMonthly + d.inspectorWageMonthly + i.wageMgmt + i.wageOpsMgr;
+  const trasaM     = d.totalTrasaMonthly;
+  const dispatchM  = d.dispatchMonthly;
+  const locoRentM  = d.locoRentMonthly;
+  const insuranceM = i.insuranceCost;
+  const otherFixedM = i.otherFixed;
+  const carM       = d.carMonthly;
+
+  // t=0: 2 mj depozit + 1 mj najma unaprijed = 3 × locoRent × locoNeeded
+  const initialOutlay = d.locoNeeded * i.locoRent * 3;
+
+  let balance = -initialOutlay;
+  let minBalance = balance;
+  let minMonth = 0;
+  let breakevenMonth = null;
+
+  const rows = [];
+  for (let m = 1; m <= months; m++) {
+    const inflow = m >= 2 ? revM : 0;
+
+    const locoRentOut   = m === 1 ? 0 : locoRentM;       // M1 already paid in initial outlay
+    const currentMonth  = insuranceM + otherFixedM + carM;
+    const wagesPrev     = m >= 2 ? wagesM    : 0;
+    const trasaPrev     = m >= 2 ? trasaM    : 0;
+    const dispatchPrev  = m >= 2 ? dispatchM : 0;
+
+    const outflow = locoRentOut + currentMonth + wagesPrev + trasaPrev + dispatchPrev;
+    const net = inflow - outflow;
+    balance += net;
+
+    if (balance < minBalance) { minBalance = balance; minMonth = m; }
+    if (breakevenMonth === null && balance >= 0) breakevenMonth = m;
+
+    rows.push({
+      month: m,
+      inflow,
+      outflow,
+      net,
+      balance,
+      breakdown: { locoRentOut, currentMonth, wagesPrev, trasaPrev, dispatchPrev }
+    });
+  }
+
+  return { initialOutlay, rows, minBalance, minMonth, endBalance: balance, breakevenMonth };
 }
 
 /* =========================================================================
@@ -569,6 +634,98 @@ function renderPlan() {
 }
 
 /* =========================================================================
+   CASHFLOW RENDERER (alert + tile-ovi + tablica)
+   Chart se crta u renderCharts() radi konzistentnosti s ostalim grafovima.
+   ========================================================================= */
+function renderCashflow() {
+  const d = lastData.calc;
+  const i = lastData.inputs;
+  const cf = lastData.cashflow;
+
+  // Alert s pretpostavkama modela
+  document.getElementById('cf-alert').innerHTML = `
+    <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+    <div>
+      <strong>${t('cf.alertTitle')}</strong>
+      <ul style="margin: 6px 0 0 0; padding-left: 18px; line-height: 1.6;">
+        <li>${t('cf.alert.r1')}</li>
+        <li>${t('cf.alert.r2')}</li>
+        <li>${t('cf.alert.r3')}</li>
+        <li>${t('cf.alert.r4')}</li>
+        <li>${t('cf.alert.r5')}</li>
+        <li>${t('cf.alert.r6')}</li>
+        <li>${t('cf.alert.r7')}</li>
+      </ul>
+    </div>
+  `;
+
+  // Hero tile-ovi
+  const endColor = cf.endBalance >= 0 ? 'var(--green)' : 'var(--red)';
+  const beTileVal = cf.breakevenMonth ? 'M' + cf.breakevenMonth : '—';
+  const beTileSub = cf.breakevenMonth ? t('cf.tile.breakevenSub') : t('cf.tile.breakevenNone');
+
+  document.getElementById('cards-cashflow').innerHTML = `
+    <div class="metric-tile">
+      <div class="metric-tile-label">${t('cf.tile.initial')}</div>
+      <div class="metric-tile-value" style="color: var(--red)">${fmtEurK(-cf.initialOutlay)}</div>
+      <div class="metric-tile-sub">${t('cf.tile.initialSub')}</div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-tile-label">${t('cf.tile.minBalance')}</div>
+      <div class="metric-tile-value" style="color: var(--red)">${fmtEurK(cf.minBalance)}</div>
+      <div class="metric-tile-sub">${t('cf.tile.minBalanceSub', { n: cf.minMonth })}</div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-tile-label">${t('cf.tile.endBalance')}</div>
+      <div class="metric-tile-value" style="color: ${endColor}">${fmtEurK(cf.endBalance)}</div>
+      <div class="metric-tile-sub">${t('cf.tile.endBalanceSub')}</div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-tile-label">${t('cf.tile.breakeven')}</div>
+      <div class="metric-tile-value">${beTileVal}</div>
+      <div class="metric-tile-sub">${beTileSub}</div>
+    </div>
+  `;
+
+  // Tablica
+  let html = `
+    <tr class="head">
+      <td>${t('cf.col.month')}</td>
+      <td class="num">${t('cf.col.inflow')}</td>
+      <td class="num">${t('cf.col.outflow')}</td>
+      <td class="num">${t('cf.col.net')}</td>
+      <td class="num">${t('cf.col.balance')}</td>
+    </tr>
+    <tr class="subtle">
+      <td>
+        ${t('cf.row.initial')}
+        <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 2px;">
+          ${t('cf.row.initialDesc', { n: d.locoNeeded, rent: fmtEurK(i.locoRent) })}
+        </div>
+      </td>
+      <td class="num">—</td>
+      <td class="num" style="color: var(--red)">${fmtEurK(cf.initialOutlay)}</td>
+      <td class="num" style="color: var(--red)">${fmtEurK(-cf.initialOutlay)}</td>
+      <td class="num" style="color: var(--red)">${fmtEurK(-cf.initialOutlay)}</td>
+    </tr>
+  `;
+  cf.rows.forEach(r => {
+    const balanceColor = r.balance >= 0 ? 'var(--green)' : 'var(--red)';
+    const netColor = r.net >= 0 ? 'var(--green)' : 'var(--red)';
+    html += `
+      <tr>
+        <td>${t('cf.month', { n: r.month })}</td>
+        <td class="num">${r.inflow > 0 ? fmtEurK(r.inflow) : '—'}</td>
+        <td class="num" style="color: var(--red)">${fmtEurK(r.outflow)}</td>
+        <td class="num" style="color: ${netColor}">${fmtEurK(r.net)}</td>
+        <td class="num" style="color: ${balanceColor}">${fmtEurK(r.balance)}</td>
+      </tr>
+    `;
+  });
+  document.getElementById('cashflow-table').innerHTML = html;
+}
+
+/* =========================================================================
    CHARTS
    ========================================================================= */
 Chart.defaults.color = '#9ca3b8';
@@ -745,6 +902,49 @@ function renderCharts() {
       }
     });
   }
+
+  // CASHFLOW CHART (mixed: bar inflow/outflow + line cumulative balance)
+  if (cfChartInst) cfChartInst.destroy();
+  const cfCtx = document.getElementById('cashflowChart');
+  if (cfCtx && lastData.cashflow) {
+    const cf = lastData.cashflow;
+    const cfLabels   = cf.rows.map(r => 'M' + r.month);
+    const cfInflows  = cf.rows.map(r => Math.round(r.inflow));
+    const cfOutflows = cf.rows.map(r => -Math.round(r.outflow));   // negative => below zero
+    const cfBalances = cf.rows.map(r => Math.round(r.balance));
+
+    cfChartInst = new Chart(cfCtx, {
+      type: 'bar',
+      data: {
+        labels: cfLabels,
+        datasets: [
+          { type: 'bar',  label: t('cf.chart.inflow'),  data: cfInflows,  backgroundColor: '#34d399', borderRadius: 3, order: 2 },
+          { type: 'bar',  label: t('cf.chart.outflow'), data: cfOutflows, backgroundColor: '#f87171', borderRadius: 3, order: 2 },
+          { type: 'line', label: t('cf.chart.balance'), data: cfBalances, borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#4f8cff', tension: 0.25, fill: false, order: 1 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 12 }, usePointStyle: true, padding: 12 } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ctx.dataset.label + ': ' + fmtEurK(ctx.parsed.y)
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: { callback: (v) => fmt(v / 1000, 0) + 'k €' },
+            grid: { color: '#2a3447' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
 }
 
 /* =========================================================================
@@ -754,11 +954,24 @@ async function exportPDF() {
   if (!lastData) { showToast(t('toast.calcFirst'), 'error'); return; }
   showToast(t('toast.generating'), '');
 
+  // Render each chart on an offscreen canvas sized to match its PDF box aspect ratio.
+  // Avoids responsive-sizing distortion from the live (often hidden) canvases.
+  const costImgData = await captureChart(costChartInst, 1240, 800);  // 170×110 mm box
+  const revImgData  = await captureChart(revChartInst,  1360, 800);  // 170×100 mm box
+  const sensImgData = await captureChart(sensChartInst, 1180, 900);  // 170×130 mm box
+  const cfImgData   = await captureChart(cfChartInst,   1500, 800);  // 170×95 mm box (24 month bars + line)
+
+  const routeSvgs = document.querySelectorAll('.route-svg');
+  const locoImg1  = routeSvgs[0] ? await svgToDataUrl(routeSvgs[0]) : null;
+  const locoImg2  = routeSvgs[1] ? await svgToDataUrl(routeSvgs[1]) : null;
+
+  try {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
   doc.setFont('Inter', 'normal');
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
+  let pageNum = 1;
 
   const d = lastData.calc;
   const i = lastData.inputs;
@@ -880,7 +1093,8 @@ async function exportPDF() {
   // Footer naslovne
   doc.setFontSize(8);
   doc.setTextColor(150, 160, 180);
-  doc.text(t('pdf.pageLbl') + ' 1', pageW / 2, pageH - 10, { align: 'center' });
+  doc.text(t('pdf.pageLbl') + ' ' + pageNum, pageW / 2, pageH - 10, { align: 'center' });
+  pageNum++;
 
   // ============== STRANICA 2 — UVOD I OPIS ==============
   doc.addPage();
@@ -929,7 +1143,18 @@ async function exportPDF() {
   y = drawSubheading(doc, t('pdf.s1.locoHead'), y);
   y = drawText(doc, t('pdf.s1.locoBody'), 20, y, pageW - 40);
 
-  drawPageFooter(doc, 2);
+  // Loco supply route diagrams appended to this page
+  if (locoImg1 || locoImg2) {
+    y += 5;
+    y = drawSubheading(doc, t('card.locoSupply.title'), y);
+    y += 2;
+    const svgW = pageW - 40;
+    const svgH = 35;
+    if (locoImg1) { doc.addImage(locoImg1, 'PNG', 20, y, svgW, svgH); y += svgH + 4; }
+    if (locoImg2) { doc.addImage(locoImg2, 'PNG', 20, y, svgW, svgH); }
+  }
+
+  drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 3 — RESURSI ==============
   doc.addPage();
@@ -1016,7 +1241,7 @@ async function exportPDF() {
     }
   });
 
-  drawPageFooter(doc, 3);
+  drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 4 — TROŠKOVI ==============
   doc.addPage();
@@ -1136,7 +1361,19 @@ async function exportPDF() {
     }
   });
 
-  drawPageFooter(doc, 4);
+  drawPageFooter(doc, pageNum++);
+
+  // ============== NOVA STRANICA — STRUKTURA TROŠKOVA (grafikon) ==============
+  doc.addPage();
+  y = 20;
+  y = drawPageHeader(doc, t('card.costStructure.title'), y);
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 110, 130);
+  doc.text(t('card.costStructure.sub'), 20, y);
+  y += 10;
+  doc.addImage(costImgData, 'PNG', 20, y, pageW - 40, 110);
+  drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 5 — RAČUN DOBITI I GUBITKA ==============
   doc.addPage();
@@ -1231,7 +1468,19 @@ async function exportPDF() {
     }
   });
 
-  drawPageFooter(doc, 5);
+  drawPageFooter(doc, pageNum++);
+
+  // ============== NOVA STRANICA — PRIHOD VS TROŠKOVI (grafikon) ==============
+  doc.addPage();
+  y = 20;
+  y = drawPageHeader(doc, t('card.revVsCost.title'), y);
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 110, 130);
+  doc.text(t('card.revVsCost.sub'), 20, y);
+  y += 10;
+  doc.addImage(revImgData, 'PNG', 20, y, pageW - 40, 100);
+  drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 6 — ANALIZA OSJETLJIVOSTI ==============
   doc.addPage();
@@ -1322,7 +1571,150 @@ async function exportPDF() {
   });
   y = drawText(doc, conclusion, 20, y, pageW - 40);
 
-  drawPageFooter(doc, 6);
+  drawPageFooter(doc, pageNum++);
+
+  // ============== NOVA STRANICA — ANALIZA OSJETLJIVOSTI (grafikon) ==============
+  doc.addPage();
+  y = 20;
+  y = drawPageHeader(doc, t('card.sens.title'), y);
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 110, 130);
+  doc.text(t('card.sens.sub'), 20, y);
+  y += 10;
+  doc.addImage(sensImgData, 'PNG', 20, y, pageW - 40, 130);
+  drawPageFooter(doc, pageNum++);
+
+  // ============== NOVA STRANICA — TIJEK NOVCA (intro + KPI + chart) ==============
+  const cf = lastData.cashflow;
+  doc.addPage();
+  y = 20;
+  y = drawPageHeader(doc, t('pdf.s_cf.title'), y);
+
+  doc.setFontSize(10);
+  doc.setFont('Inter', 'normal');
+  doc.setTextColor(40, 50, 70);
+  y = drawText(doc, t('pdf.s_cf.intro'), 20, y, pageW - 40);
+  y += 4;
+
+  // KPI tablica (4 ključne brojke)
+  y = drawSubheading(doc, t('pdf.s_cf.kpiHead'), y);
+  const beVal = cf.breakevenMonth ? 'M' + cf.breakevenMonth : t('cf.tile.breakevenNone');
+  doc.autoTable({
+    startY: y,
+    body: [
+      [t('cf.tile.initial'), fmtEurK(-cf.initialOutlay)],
+      [t('cf.tile.minBalance') + ' (M' + cf.minMonth + ')', fmtEurK(cf.minBalance)],
+      [t('cf.tile.breakeven'), beVal],
+      [t('cf.tile.endBalance'), fmtEurK(cf.endBalance)]
+    ],
+    theme: 'plain',
+    styles: { font: 'Inter', fontSize: 9.5, cellPadding: 3 },
+    columnStyles: {
+      0: { textColor: [100, 110, 130] },
+      1: { halign: 'right', fontStyle: 'bold' }
+    },
+    didParseCell: (data) => {
+      if (data.column.index === 1) {
+        if (data.row.index === 0 || data.row.index === 1) {
+          data.cell.styles.textColor = [180, 50, 50];
+        } else if (data.row.index === 3) {
+          data.cell.styles.textColor = cf.endBalance >= 0 ? [30, 130, 80] : [180, 50, 50];
+        } else if (data.row.index === 2) {
+          data.cell.styles.textColor = cf.breakevenMonth ? [30, 130, 80] : [120, 130, 150];
+        }
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY + 6;
+
+  // Cashflow grafikon
+  if (cfImgData) {
+    doc.addImage(cfImgData, 'PNG', 20, y, pageW - 40, 95);
+    y += 95 + 4;
+  }
+
+  drawPageFooter(doc, pageNum++);
+
+  // ============== NOVA STRANICA — TIJEK NOVCA (pretpostavke + tablica) ==============
+  doc.addPage();
+  y = 20;
+  y = drawPageHeader(doc, t('pdf.s_cf.title'), y);
+
+  // Pretpostavke (kompaktni bullets)
+  y = drawSubheading(doc, t('pdf.s_cf.assumpHead'), y);
+  doc.setFontSize(9);
+  doc.setFont('Inter', 'normal');
+  doc.setTextColor(40, 50, 70);
+  const cfAssumptions = [
+    t('cf.alert.r1'),
+    t('cf.alert.r2'),
+    t('cf.alert.r3'),
+    t('cf.alert.r4'),
+    t('cf.alert.r5'),
+    t('cf.alert.r6'),
+    t('cf.alert.r7')
+  ];
+  cfAssumptions.forEach(line => {
+    doc.text('•', 22, y);
+    const lines = doc.splitTextToSize(line, pageW - 50);
+    doc.text(lines, 28, y);
+    y += lines.length * 4.5 + 0.5;
+  });
+  y += 4;
+
+  // Tablica
+  y = drawSubheading(doc, t('pdf.s_cf.tblHead'), y);
+  doc.setFontSize(8.5);
+  doc.setTextColor(120, 130, 150);
+  doc.text(t('pdf.s_cf.tblNote'), 20, y);
+  y += 5;
+
+  const cfTblHead = [[t('cf.col.month'), t('cf.col.inflow'), t('cf.col.outflow'), t('cf.col.net'), t('cf.col.balance')]];
+  const cfTblBody = [
+    [t('cf.row.initial'), '—', fmtEurK(cf.initialOutlay), fmtEurK(-cf.initialOutlay), fmtEurK(-cf.initialOutlay)]
+  ].concat(cf.rows.map(r => [
+    'M' + r.month,
+    r.inflow > 0 ? fmtEurK(r.inflow) : '—',
+    fmtEurK(r.outflow),
+    fmtEurK(r.net),
+    fmtEurK(r.balance)
+  ]));
+
+  doc.autoTable({
+    startY: y,
+    head: cfTblHead,
+    body: cfTblBody,
+    theme: 'striped',
+    headStyles: { font: 'Inter', fillColor: [31, 64, 145], textColor: [255, 255, 255], fontSize: 8.5, fontStyle: 'bold', halign: 'center' },
+    styles: { font: 'Inter', fontSize: 8, cellPadding: 1.8 },
+    columnStyles: {
+      0: { cellWidth: 24, fontStyle: 'bold', textColor: [60, 70, 90] },
+      1: { halign: 'right' },
+      2: { halign: 'right', textColor: [180, 50, 50] },
+      3: { halign: 'right' },
+      4: { halign: 'right', fontStyle: 'bold' }
+    },
+    didParseCell: (data) => {
+      if (data.section !== 'body') return;
+      // First row (initial state) — sve crveno
+      if (data.row.index === 0) {
+        if (data.column.index >= 2) data.cell.styles.textColor = [180, 50, 50];
+        return;
+      }
+      // Months: net column (3) i balance column (4) coloured by sign
+      const r = cf.rows[data.row.index - 1];
+      if (!r) return;
+      if (data.column.index === 3) {
+        data.cell.styles.textColor = r.net >= 0 ? [30, 130, 80] : [180, 50, 50];
+      }
+      if (data.column.index === 4) {
+        data.cell.styles.textColor = r.balance >= 0 ? [30, 130, 80] : [180, 50, 50];
+      }
+    }
+  });
+
+  drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 7 — ULAZNI PARAMETRI ==============
   doc.addPage();
@@ -1413,12 +1805,16 @@ async function exportPDF() {
     }
   });
 
-  drawPageFooter(doc, 7);
+  drawPageFooter(doc, pageNum++);
 
   // SAVE
   const filename = `${t('pdf.filename')}_${new Date().toISOString().slice(0, 10)}.pdf`;
   doc.save(filename);
   showToast(t('toast.pdfDone', { filename }), 'success');
+  } catch (err) {
+    console.error('PDF export error:', err);
+    showToast('PDF greška: ' + err.message, 'error');
+  }
 }
 
 /* ---------- PDF helpers ---------- */
@@ -1471,6 +1867,87 @@ function drawPageFooter(doc, num) {
   doc.setFont('Inter', 'normal');
   doc.text(t('pdf.footer'), 20, pageH - 8);
   doc.text(t('pdf.pageLbl') + ' ' + num, pageW - 20, pageH - 8, { align: 'right' });
+}
+
+/* ---------- Chart/SVG → image helpers (for PDF export) ---------- */
+
+// Renders a Chart.js chart onto an offscreen canvas at fixed dimensions and returns a PNG data URL.
+// We render fresh on a sized canvas (rather than re-using the live one) so the PDF box aspect ratio
+// is preserved and the chart isn't distorted by the live canvas's responsive sizing.
+async function captureChart(chartInst, width, height) {
+  if (!chartInst || !chartInst.config) return null;
+  const off = document.createElement('canvas');
+  off.width = width;
+  off.height = height;
+  off.style.cssText = `position:fixed;left:-99999px;top:0;width:${width}px;height:${height}px`;
+  document.body.appendChild(off);
+
+  let temp = null;
+  try {
+    const cfg = chartInst.config;
+    temp = new Chart(off, {
+      type: cfg.type,
+      data: cfg.data,
+      options: {
+        ...cfg.options,
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        devicePixelRatio: 2
+      }
+    });
+    temp.update('none');
+  } catch (e) {
+    console.error('captureChart failed:', e);
+  }
+
+  const dataUrl = getCanvasDataUrl(off);
+  if (temp) temp.destroy();
+  off.remove();
+  return dataUrl;
+}
+
+// Composites Chart.js canvas onto a light background so dark-mode colors read on white PDF
+function getCanvasDataUrl(canvas) {
+  if (!canvas) return null;
+  const tmp = document.createElement('canvas');
+  tmp.width  = canvas.width  || 800;
+  tmp.height = canvas.height || 400;
+  const ctx = tmp.getContext('2d');
+  ctx.fillStyle = '#f0f4fa';
+  ctx.fillRect(0, 0, tmp.width, tmp.height);
+  ctx.drawImage(canvas, 0, 0);
+  return tmp.toDataURL('image/png');
+}
+
+// Serialises an inline SVG element to a PNG data URL with an explicit dark background
+function svgToDataUrl(svgEl) {
+  return new Promise(resolve => {
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width',  '800');
+    clone.setAttribute('height', '240');
+    // Ensure text renders with a fallback font when drawn on canvas
+    clone.querySelectorAll('text').forEach(el => {
+      if (!el.getAttribute('font-family')) el.setAttribute('font-family', 'Arial, sans-serif');
+    });
+    const svgStr = new XMLSerializer().serializeToString(clone);
+    const blob   = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url    = URL.createObjectURL(blob);
+    const img    = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 800; canvas.height = 240;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 800, 240);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
 }
 
 /* ---------- INIT ---------- */

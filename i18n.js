@@ -155,7 +155,7 @@ const I18N = {
     'card.annual.sub': '12 × mjesečni rezultat',
 
     // Footer
-    'footer': 'Logic Rail · Poslovni plan kalkulator · v1.0 · Sva izračunavanja se vrše lokalno u pregledniku',
+    'footer': 'Logic Rail · Poslovni plan kalkulator · v1.1 · Sva izračunavanja se vrše lokalno u pregledniku',
 
     // Resources renderer
     'res.alertTitle': 'Logika lokomotiva:',
@@ -495,7 +495,50 @@ const I18N = {
     'pdf.s6.l5': 'Dispečer (€/par vlakova)',
     'pdf.s6.l_car': 'Automobili (€/par vlakova)',
     'pdf.s6.l6': 'Ostali fiksni troškovi (€/mj)',
-    'pdf.s6.l_ins': 'Polica osiguranja (€/mj)'
+    'pdf.s6.l_ins': 'Polica osiguranja (€/mj)',
+
+    // Cashflow tab
+    'tab.cashflow': 'Tijek novca',
+    'card.cashflow.title': 'Tijek novca po mjesecima',
+    'card.cashflow.sub': 'Projekcija na 24 mjeseca uz realne uvjete naplate i plaćanja',
+    'card.cashflow.chartTitle': 'Tijek novca — grafički prikaz',
+    'card.cashflow.chartSub': 'Priliv (zeleno) vs odliv (crveno) i kumulativno stanje (plavo)',
+    'cf.alertTitle': 'Pretpostavke modela:',
+    'cf.alert.r1': 'Početno stanje (t=0): depozit 2 mjesečna najma + najam unaprijed za 1. mjesec, po lokomotivi',
+    'cf.alert.r2': 'Prihodi: naplaćuju se 30 dana nakon izvršenja usluge',
+    'cf.alert.r3': 'Plaće (strojovođe, pregledači, uprava, voditelj operative): 10 dana nakon završetka mjeseca',
+    'cf.alert.r4': 'Najam lokomotive: u tekućem mjesecu (unaprijed)',
+    'cf.alert.r5': 'Trase (SŽ Infrastruktura) i dispečer: 30 dana nakon završetka mjeseca',
+    'cf.alert.r6': 'Polica osiguranja, ostali fiksni, automobili: u tekućem mjesecu',
+    'cf.alert.r7': 'Depozit od 2 mjeseca ostaje vezan (vraća se na kraju ugovora, izvan 24-mjesečnog prozora)',
+    'cf.tile.initial': 'Početni izdatak',
+    'cf.tile.initialSub': 'depozit + najam za 1. mj',
+    'cf.tile.minBalance': 'Najniže stanje',
+    'cf.tile.minBalanceSub': 'u mjesecu M{n}',
+    'cf.tile.endBalance': 'Stanje na kraju (M24)',
+    'cf.tile.endBalanceSub': 'kumulativno',
+    'cf.tile.breakeven': 'Break-even mjesec',
+    'cf.tile.breakevenSub': 'stanje prelazi 0',
+    'cf.tile.breakevenNone': 'nije unutar 24 mj',
+    'cf.col.month': 'Mjesec',
+    'cf.col.inflow': 'Priliv',
+    'cf.col.outflow': 'Odliv',
+    'cf.col.net': 'Neto',
+    'cf.col.balance': 'Stanje',
+    'cf.row.initial': 'Početno stanje (t=0)',
+    'cf.row.initialDesc': 'Depozit ({n} loko × 2 × {rent}) + najam za M1 ({n} × {rent})',
+    'cf.month': 'M{n}',
+    'cf.chart.inflow': 'Priliv',
+    'cf.chart.outflow': 'Odliv',
+    'cf.chart.balance': 'Kumulativno stanje',
+
+    // PDF — Cashflow stranice
+    'pdf.s_cf.title': 'Tijek novca (24-mjesečna projekcija)',
+    'pdf.s_cf.intro': 'Projekcija pokazuje stvarno kretanje gotovine kroz 24 mjeseca poslovanja s realnim vremenskim razmacima između izvršenja usluge i naplate prihoda, te između nastanka troška i njegovog plaćanja. Početno stanje obuhvaća depozit za lokomotive (2 mjeseca najma po lokomotivi) i najam unaprijed za prvi mjesec.',
+    'pdf.s_cf.kpiHead': 'Ključne brojke',
+    'pdf.s_cf.assumpHead': 'Pretpostavke modela',
+    'pdf.s_cf.tblHead': 'Tablica tijeka novca po mjesecima',
+    'pdf.s_cf.tblNote': 'Vrijednosti zaokružene na cijele eure. Crveno = negativno; zeleno = pozitivno stanje.'
   },
 
   en: {
@@ -638,7 +681,7 @@ const I18N = {
     'card.annual.title': 'Annual projection',
     'card.annual.sub': '12 × monthly result',
 
-    'footer': 'Logic Rail · Business plan calculator · v1.0 · All calculations run locally in the browser',
+    'footer': 'Logic Rail · Business plan calculator · v1.1 · All calculations run locally in the browser',
 
     'res.alertTitle': 'Locomotive logic:',
     'res.alertBody': 'For {trains} train pairs/mo, <strong>{loco} locomotives</strong> are required ({locoDays} active loco-days/mo = {dpp} trains × {factor} light/wait × {trains} pairs; {avail} active days per locomotive, 30 − 2 service). Loaded train avg. {avgW}t (>1600t) = <strong>2 locomotives</strong> on Ljubljana–Sežana segment. Empty return (~{emptyW}t) = <strong>1 locomotive</strong>. Lease {rent}/mo × {loco} loco = <strong>{total}/mo</strong> (~{perPair} per train pair).',
@@ -971,7 +1014,50 @@ const I18N = {
     'pdf.s6.l5': 'Dispatcher (€/train pair)',
     'pdf.s6.l_car': 'Vehicles (€/train pair)',
     'pdf.s6.l6': 'Other fixed costs (€/mo)',
-    'pdf.s6.l_ins': 'Insurance policy (€/mo)'
+    'pdf.s6.l_ins': 'Insurance policy (€/mo)',
+
+    // Cashflow tab
+    'tab.cashflow': 'Cash flow',
+    'card.cashflow.title': 'Monthly cash flow',
+    'card.cashflow.sub': '24-month projection with realistic collection and payment terms',
+    'card.cashflow.chartTitle': 'Cash flow — chart',
+    'card.cashflow.chartSub': 'Inflow (green) vs outflow (red) and cumulative balance (blue)',
+    'cf.alertTitle': 'Model assumptions:',
+    'cf.alert.r1': 'Initial state (t=0): 2-month deposit + first month rent paid in advance, per locomotive',
+    'cf.alert.r2': 'Revenue: collected 30 days after service is delivered',
+    'cf.alert.r3': 'Wages (drivers, inspectors, management, ops manager): 10 days after month end',
+    'cf.alert.r4': 'Locomotive rent: in the current month (paid in advance)',
+    'cf.alert.r5': 'Track access (SŽ Infrastruktura) and dispatcher: 30 days after month end',
+    'cf.alert.r6': 'Insurance, other fixed costs, vehicles: in the current month',
+    'cf.alert.r7': 'The 2-month deposit stays tied up (refunded at end of contract, outside the 24-month window)',
+    'cf.tile.initial': 'Initial outlay',
+    'cf.tile.initialSub': 'deposit + first month rent',
+    'cf.tile.minBalance': 'Lowest balance',
+    'cf.tile.minBalanceSub': 'in month M{n}',
+    'cf.tile.endBalance': 'Balance at end (M24)',
+    'cf.tile.endBalanceSub': 'cumulative',
+    'cf.tile.breakeven': 'Break-even month',
+    'cf.tile.breakevenSub': 'balance crosses 0',
+    'cf.tile.breakevenNone': 'not within 24 mo',
+    'cf.col.month': 'Month',
+    'cf.col.inflow': 'Inflow',
+    'cf.col.outflow': 'Outflow',
+    'cf.col.net': 'Net',
+    'cf.col.balance': 'Balance',
+    'cf.row.initial': 'Initial state (t=0)',
+    'cf.row.initialDesc': 'Deposit ({n} loco × 2 × {rent}) + M1 rent ({n} × {rent})',
+    'cf.month': 'M{n}',
+    'cf.chart.inflow': 'Inflow',
+    'cf.chart.outflow': 'Outflow',
+    'cf.chart.balance': 'Cumulative balance',
+
+    // PDF — Cashflow pages
+    'pdf.s_cf.title': 'Cash flow (24-month projection)',
+    'pdf.s_cf.intro': 'This projection shows actual cash movement over 24 months of operations with realistic time gaps between service delivery and revenue collection, and between cost incurrence and payment. The initial outlay includes the locomotive deposit (2 months of rent per locomotive) and rent paid in advance for the first month.',
+    'pdf.s_cf.kpiHead': 'Key figures',
+    'pdf.s_cf.assumpHead': 'Model assumptions',
+    'pdf.s_cf.tblHead': 'Monthly cash flow table',
+    'pdf.s_cf.tblNote': 'Values rounded to whole euros. Red = negative; green = positive balance.'
   },
 
   it: {
@@ -1114,7 +1200,7 @@ const I18N = {
     'card.annual.title': 'Proiezione annuale',
     'card.annual.sub': '12 × risultato mensile',
 
-    'footer': 'Logic Rail · Calcolatore piano aziendale · v1.0 · Tutti i calcoli vengono eseguiti localmente nel browser',
+    'footer': 'Logic Rail · Calcolatore piano aziendale · v1.1 · Tutti i calcoli vengono eseguiti localmente nel browser',
 
     'res.alertTitle': 'Logica delle locomotive:',
     'res.alertBody': 'Per {trains} coppie di treni/mese servono <strong>{loco} locomotive</strong> ({locoDays} loco-giorni attivi/mese = {dpp} treni × {factor} light/wait × {trains} coppie; {avail} giorni attivi per locomotiva, 30 − 2 servizio). Treno carico medio {avgW}t (>1600t) = <strong>2 locomotive</strong> sul tratto Ljubljana–Sežana. Ritorno vuoto (~{emptyW}t) = <strong>1 locomotiva</strong>. Leasing {rent}/mese × {loco} loco = <strong>{total}/mese</strong> (~{perPair} per coppia di treni).',
@@ -1447,7 +1533,50 @@ const I18N = {
     'pdf.s6.l5': 'Dispatcher (€/coppia treni)',
     'pdf.s6.l_car': 'Veicoli (€/coppia treni)',
     'pdf.s6.l6': 'Altri costi fissi (€/mese)',
-    'pdf.s6.l_ins': 'Polizza assicurativa (€/mese)'
+    'pdf.s6.l_ins': 'Polizza assicurativa (€/mese)',
+
+    // Cashflow tab
+    'tab.cashflow': 'Flusso di cassa',
+    'card.cashflow.title': 'Flusso di cassa mensile',
+    'card.cashflow.sub': 'Proiezione a 24 mesi con termini reali di incasso e pagamento',
+    'card.cashflow.chartTitle': 'Flusso di cassa — grafico',
+    'card.cashflow.chartSub': 'Entrate (verde) vs uscite (rosso) e saldo cumulativo (blu)',
+    'cf.alertTitle': 'Ipotesi del modello:',
+    'cf.alert.r1': 'Stato iniziale (t=0): deposito di 2 mensilità + canone del primo mese pagato in anticipo, per locomotiva',
+    'cf.alert.r2': 'Ricavi: incassati 30 giorni dopo l\'erogazione del servizio',
+    'cf.alert.r3': 'Stipendi (macchinisti, ispettori, direzione, capo operativo): 10 giorni dopo la fine del mese',
+    'cf.alert.r4': 'Noleggio locomotiva: nel mese corrente (pagamento anticipato)',
+    'cf.alert.r5': 'Tracce (SŽ Infrastruktura) e dispatcher: 30 giorni dopo la fine del mese',
+    'cf.alert.r6': 'Polizza assicurativa, altri costi fissi, veicoli: nel mese corrente',
+    'cf.alert.r7': 'Il deposito di 2 mesi resta vincolato (restituito a fine contratto, fuori dalla finestra di 24 mesi)',
+    'cf.tile.initial': 'Esborso iniziale',
+    'cf.tile.initialSub': 'deposito + canone 1° mese',
+    'cf.tile.minBalance': 'Saldo minimo',
+    'cf.tile.minBalanceSub': 'nel mese M{n}',
+    'cf.tile.endBalance': 'Saldo a fine (M24)',
+    'cf.tile.endBalanceSub': 'cumulativo',
+    'cf.tile.breakeven': 'Mese break-even',
+    'cf.tile.breakevenSub': 'saldo supera 0',
+    'cf.tile.breakevenNone': 'non entro 24 mesi',
+    'cf.col.month': 'Mese',
+    'cf.col.inflow': 'Entrate',
+    'cf.col.outflow': 'Uscite',
+    'cf.col.net': 'Netto',
+    'cf.col.balance': 'Saldo',
+    'cf.row.initial': 'Stato iniziale (t=0)',
+    'cf.row.initialDesc': 'Deposito ({n} loco × 2 × {rent}) + canone M1 ({n} × {rent})',
+    'cf.month': 'M{n}',
+    'cf.chart.inflow': 'Entrate',
+    'cf.chart.outflow': 'Uscite',
+    'cf.chart.balance': 'Saldo cumulativo',
+
+    // PDF — Pagine flusso di cassa
+    'pdf.s_cf.title': 'Flusso di cassa (proiezione a 24 mesi)',
+    'pdf.s_cf.intro': 'La proiezione mostra il movimento effettivo di cassa durante 24 mesi di operatività con intervalli temporali realistici tra l\'erogazione del servizio e l\'incasso, e tra la maturazione del costo e il suo pagamento. L\'esborso iniziale include il deposito per le locomotive (2 mensilità di canone per locomotiva) e il canone pagato in anticipo per il primo mese.',
+    'pdf.s_cf.kpiHead': 'Cifre chiave',
+    'pdf.s_cf.assumpHead': 'Ipotesi del modello',
+    'pdf.s_cf.tblHead': 'Tabella mensile del flusso di cassa',
+    'pdf.s_cf.tblNote': 'Valori arrotondati a euro interi. Rosso = saldo negativo; verde = saldo positivo.'
   },
 
   sl: {
@@ -1590,7 +1719,7 @@ const I18N = {
     'card.annual.title': 'Letna projekcija',
     'card.annual.sub': '12 × mesečni rezultat',
 
-    'footer': 'Logic Rail · Kalkulator poslovnega načrta · v1.0 · Vsi izračuni potekajo lokalno v brskalniku',
+    'footer': 'Logic Rail · Kalkulator poslovnega načrta · v1.1 · Vsi izračuni potekajo lokalno v brskalniku',
 
     'res.alertTitle': 'Logika lokomotiv:',
     'res.alertBody': 'Za {trains} parov vlakov/mes je potrebnih <strong>{loco} lokomotiv</strong> ({locoDays} aktivnih loko-dni mes. = {dpp} vlaki × {factor} light/wait × {trains} parov; {avail} aktivnih dni na lokomotivo, 30 − 2 servis). Polni vlak povp. {avgW}t (>1600t) = <strong>2 lokomotivi</strong> na odseku Ljubljana–Sežana. Prazni povratek (~{emptyW}t) = <strong>1 lokomotiva</strong>. Najem {rent}/mes × {loco} loko = <strong>{total}/mes</strong> (~{perPair} na par vlakov).',
@@ -1923,7 +2052,50 @@ const I18N = {
     'pdf.s6.l5': 'Disponent (€/par vlakov)',
     'pdf.s6.l_car': 'Vozila (€/par vlakov)',
     'pdf.s6.l6': 'Drugi fiksni stroški (€/mes)',
-    'pdf.s6.l_ins': 'Zavarovalna polica (€/mes)'
+    'pdf.s6.l_ins': 'Zavarovalna polica (€/mes)',
+
+    // Cashflow tab
+    'tab.cashflow': 'Denarni tok',
+    'card.cashflow.title': 'Mesečni denarni tok',
+    'card.cashflow.sub': 'Projekcija za 24 mesecev z realnimi pogoji unovčenja in plačila',
+    'card.cashflow.chartTitle': 'Denarni tok — grafikon',
+    'card.cashflow.chartSub': 'Priliv (zeleno) vs odliv (rdeče) in kumulativno stanje (modro)',
+    'cf.alertTitle': 'Predpostavke modela:',
+    'cf.alert.r1': 'Začetno stanje (t=0): depozit 2 mesečnih najemnin + najemnina za 1. mesec vnaprej, na lokomotivo',
+    'cf.alert.r2': 'Prihodki: unovčeni 30 dni po opravljeni storitvi',
+    'cf.alert.r3': 'Plače (strojevodje, pregledniki, uprava, vodja operative): 10 dni po koncu meseca',
+    'cf.alert.r4': 'Najem lokomotive: v tekočem mesecu (vnaprej)',
+    'cf.alert.r5': 'Trase (SŽ Infrastruktura) in dispečer: 30 dni po koncu meseca',
+    'cf.alert.r6': 'Zavarovalna polica, drugi fiksni, vozila: v tekočem mesecu',
+    'cf.alert.r7': 'Depozit 2 mesecev ostane vezan (vrnjen ob koncu pogodbe, izven 24-mesečnega okna)',
+    'cf.tile.initial': 'Začetni izdatek',
+    'cf.tile.initialSub': 'depozit + najemnina za 1. mes',
+    'cf.tile.minBalance': 'Najnižje stanje',
+    'cf.tile.minBalanceSub': 'v mesecu M{n}',
+    'cf.tile.endBalance': 'Stanje na koncu (M24)',
+    'cf.tile.endBalanceSub': 'kumulativno',
+    'cf.tile.breakeven': 'Break-even mesec',
+    'cf.tile.breakevenSub': 'stanje preseže 0',
+    'cf.tile.breakevenNone': 'ne v 24 mes',
+    'cf.col.month': 'Mesec',
+    'cf.col.inflow': 'Priliv',
+    'cf.col.outflow': 'Odliv',
+    'cf.col.net': 'Neto',
+    'cf.col.balance': 'Stanje',
+    'cf.row.initial': 'Začetno stanje (t=0)',
+    'cf.row.initialDesc': 'Depozit ({n} loko × 2 × {rent}) + najemnina za M1 ({n} × {rent})',
+    'cf.month': 'M{n}',
+    'cf.chart.inflow': 'Priliv',
+    'cf.chart.outflow': 'Odliv',
+    'cf.chart.balance': 'Kumulativno stanje',
+
+    // PDF — Strani denarnega toka
+    'pdf.s_cf.title': 'Denarni tok (24-mesečna projekcija)',
+    'pdf.s_cf.intro': 'Projekcija prikazuje dejansko gibanje denarja v 24 mesecih poslovanja z realnimi časovnimi zamiki med opravljeno storitvijo in unovčenjem prihodkov ter med nastankom stroška in njegovim plačilom. Začetni izdatek vključuje depozit za lokomotive (2 meseca najemnine na lokomotivo) in najemnino, plačano vnaprej za prvi mesec.',
+    'pdf.s_cf.kpiHead': 'Ključne številke',
+    'pdf.s_cf.assumpHead': 'Predpostavke modela',
+    'pdf.s_cf.tblHead': 'Mesečna tabela denarnega toka',
+    'pdf.s_cf.tblNote': 'Vrednosti zaokrožene na cele evre. Rdeče = negativno; zeleno = pozitivno stanje.'
   },
 
   sr: {
@@ -2066,7 +2238,7 @@ const I18N = {
     'card.annual.title': 'Godišnja projekcija',
     'card.annual.sub': '12 × mesečni rezultat',
 
-    'footer': 'Logic Rail · Kalkulator poslovnog plana · v1.0 · Sva izračunavanja se vrše lokalno u pregledaču',
+    'footer': 'Logic Rail · Kalkulator poslovnog plana · v1.1 · Sva izračunavanja se vrše lokalno u pregledaču',
 
     'res.alertTitle': 'Logika lokomotiva:',
     'res.alertBody': 'Za {trains} parova vozova/mes potrebno je <strong>{loco} lokomotiva</strong> ({locoDays} aktivnih loko-dana mes. = {dpp} vozovi × {factor} light/wait × {trains} parova; {avail} aktivnih dana po lokomotivi, 30 − 2 servisa). Pun voz pros. {avgW}t (>1600t) = <strong>2 lokomotive</strong> na deonici Ljubljana–Sežana. Prazan povratak (~{emptyW}t) = <strong>1 lokomotiva</strong>. Najam {rent}/mes × {loco} loko = <strong>{total}/mes</strong> (~{perPair} po paru vozova).',
@@ -2399,6 +2571,49 @@ const I18N = {
     'pdf.s6.l5': 'Dispečer (€/par vozova)',
     'pdf.s6.l_car': 'Automobili (€/par vozova)',
     'pdf.s6.l6': 'Ostali fiksni troškovi (€/mes)',
-    'pdf.s6.l_ins': 'Polisa osiguranja (€/mes)'
+    'pdf.s6.l_ins': 'Polisa osiguranja (€/mes)',
+
+    // Cashflow tab
+    'tab.cashflow': 'Tok novca',
+    'card.cashflow.title': 'Mesečni tok novca',
+    'card.cashflow.sub': 'Projekcija na 24 meseci uz realne uslove naplate i plaćanja',
+    'card.cashflow.chartTitle': 'Tok novca — grafički prikaz',
+    'card.cashflow.chartSub': 'Priliv (zeleno) vs odliv (crveno) i kumulativno stanje (plavo)',
+    'cf.alertTitle': 'Pretpostavke modela:',
+    'cf.alert.r1': 'Početno stanje (t=0): depozit 2 mesečne zakupnine + zakupnina unapred za 1. mesec, po lokomotivi',
+    'cf.alert.r2': 'Prihodi: naplaćuju se 30 dana posle izvršenja usluge',
+    'cf.alert.r3': 'Plate (mašinovođe, pregledači, uprava, vođa operative): 10 dana po isteku meseca',
+    'cf.alert.r4': 'Zakup lokomotive: u tekućem mesecu (unapred)',
+    'cf.alert.r5': 'Trase (SŽ Infrastruktura) i dispečer: 30 dana po isteku meseca',
+    'cf.alert.r6': 'Polisa osiguranja, ostali fiksni, automobili: u tekućem mesecu',
+    'cf.alert.r7': 'Depozit od 2 meseca ostaje vezan (vraća se na kraju ugovora, van 24-mesečnog okvira)',
+    'cf.tile.initial': 'Početni izdatak',
+    'cf.tile.initialSub': 'depozit + zakup za 1. mes',
+    'cf.tile.minBalance': 'Najniže stanje',
+    'cf.tile.minBalanceSub': 'u mesecu M{n}',
+    'cf.tile.endBalance': 'Stanje na kraju (M24)',
+    'cf.tile.endBalanceSub': 'kumulativno',
+    'cf.tile.breakeven': 'Break-even mesec',
+    'cf.tile.breakevenSub': 'stanje prelazi 0',
+    'cf.tile.breakevenNone': 'nije unutar 24 mes',
+    'cf.col.month': 'Mesec',
+    'cf.col.inflow': 'Priliv',
+    'cf.col.outflow': 'Odliv',
+    'cf.col.net': 'Neto',
+    'cf.col.balance': 'Stanje',
+    'cf.row.initial': 'Početno stanje (t=0)',
+    'cf.row.initialDesc': 'Depozit ({n} loko × 2 × {rent}) + zakup za M1 ({n} × {rent})',
+    'cf.month': 'M{n}',
+    'cf.chart.inflow': 'Priliv',
+    'cf.chart.outflow': 'Odliv',
+    'cf.chart.balance': 'Kumulativno stanje',
+
+    // PDF — Strane toka novca
+    'pdf.s_cf.title': 'Tok novca (24-mesečna projekcija)',
+    'pdf.s_cf.intro': 'Projekcija prikazuje stvarno kretanje gotovine kroz 24 meseca poslovanja sa realnim vremenskim razmacima između izvršenja usluge i naplate prihoda, kao i između nastanka troška i njegovog plaćanja. Početni izdatak obuhvata depozit za lokomotive (2 meseca zakupa po lokomotivi) i zakup unapred za prvi mesec.',
+    'pdf.s_cf.kpiHead': 'Ključni brojevi',
+    'pdf.s_cf.assumpHead': 'Pretpostavke modela',
+    'pdf.s_cf.tblHead': 'Tabela toka novca po mesecima',
+    'pdf.s_cf.tblNote': 'Vrednosti zaokružene na cele evre. Crveno = negativno; zeleno = pozitivno stanje.'
   }
 };
