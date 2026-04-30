@@ -66,10 +66,10 @@ const DEFAULTS = {
   revenue_full_heavy: 10000,
   revenue_empty: 0,
   loco_rent: 52000,
-  wage_driver: 4750,
-  wage_inspector: 4500,
-  wage_mgmt: 7000,
-  wage_ops_mgr: 6000,
+  wage_driver: 5225,
+  wage_inspector: 4950,
+  wage_mgmt: 7700,
+  wage_ops_mgr: 6600,
   dispatch_cost: 500,
   car_cost: 0,
   other_fixed: 2000,
@@ -286,6 +286,10 @@ function calcCashflow() {
   const i = lastData.inputs;
   const months = 24;
 
+  // Year-2 escalation factors (applied in months 13-24)
+  const ESC_LOCO = 1.02;   // +2% locomotive rent
+  const ESC_OPEX = 1.05;   // +5% wages, track access, electricity
+
   const revM       = d.revenueMonthly;
   const wagesM     = d.driverWageMonthly + d.inspectorWageMonthly + i.wageMgmt + i.wageOpsMgr;
   const trasaM     = d.totalTrasaMonthly;
@@ -305,13 +309,17 @@ function calcCashflow() {
 
   const rows = [];
   for (let m = 1; m <= months; m++) {
+    const isY2 = m > 12;
+    const escLoco = isY2 ? ESC_LOCO : 1;
+    const escOpex = isY2 ? ESC_OPEX : 1;
+
     const inflow = m >= 2 ? revM : 0;
 
-    const locoRentOut   = m === 1 ? 0 : locoRentM;       // M1 already paid in initial outlay
+    const locoRentOut   = m === 1 ? 0 : locoRentM * escLoco;   // M1 already paid in initial outlay
     const currentMonth  = insuranceM + otherFixedM + carM;
-    const wagesPrev     = m >= 2 ? wagesM    : 0;
-    const trasaPrev     = m >= 2 ? trasaM    : 0;
-    const dispatchPrev  = m >= 2 ? dispatchM : 0;
+    const wagesPrev     = m >= 2 ? wagesM    * escOpex : 0;
+    const trasaPrev     = m >= 2 ? trasaM    * escOpex : 0;
+    const dispatchPrev  = m >= 2 ? dispatchM           : 0;
 
     const outflow = locoRentOut + currentMonth + wagesPrev + trasaPrev + dispatchPrev;
     const net = inflow - outflow;
@@ -655,6 +663,7 @@ function renderCashflow() {
         <li>${t('cf.alert.r5')}</li>
         <li>${t('cf.alert.r6')}</li>
         <li>${t('cf.alert.r7')}</li>
+        <li>${t('cf.alert.r8')}</li>
       </ul>
     </div>
   `;
@@ -1653,7 +1662,8 @@ async function exportPDF() {
     t('cf.alert.r4'),
     t('cf.alert.r5'),
     t('cf.alert.r6'),
-    t('cf.alert.r7')
+    t('cf.alert.r7'),
+    t('cf.alert.r8')
   ];
   cfAssumptions.forEach(line => {
     doc.text('•', 22, y);
