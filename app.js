@@ -71,7 +71,7 @@ const DEFAULTS = {
   wage_mgmt: 7700,
   wage_ops_mgr: 6600,
   dispatch_cost: 500,
-  car_cost: 0,
+  car_cost: 200,
   other_fixed: 2000,
   insurance_cost: 2500
 };
