@@ -976,7 +976,7 @@ async function exportPDF() {
 
   try {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
   doc.setFont('Inter', 'normal');
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -1159,8 +1159,8 @@ async function exportPDF() {
     y += 2;
     const svgW = pageW - 40;
     const svgH = 35;
-    if (locoImg1) { doc.addImage(locoImg1, 'PNG', 20, y, svgW, svgH); y += svgH + 4; }
-    if (locoImg2) { doc.addImage(locoImg2, 'PNG', 20, y, svgW, svgH); }
+    if (locoImg1) { doc.addImage(locoImg1, 'JPEG', 20, y, svgW, svgH); y += svgH + 4; }
+    if (locoImg2) { doc.addImage(locoImg2, 'JPEG', 20, y, svgW, svgH); }
   }
 
   drawPageFooter(doc, pageNum++);
@@ -1381,7 +1381,7 @@ async function exportPDF() {
   doc.setTextColor(100, 110, 130);
   doc.text(t('card.costStructure.sub'), 20, y);
   y += 10;
-  doc.addImage(costImgData, 'PNG', 20, y, pageW - 40, 110);
+  doc.addImage(costImgData, 'JPEG', 20, y, pageW - 40, 110);
   drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 5 — RAČUN DOBITI I GUBITKA ==============
@@ -1488,7 +1488,7 @@ async function exportPDF() {
   doc.setTextColor(100, 110, 130);
   doc.text(t('card.revVsCost.sub'), 20, y);
   y += 10;
-  doc.addImage(revImgData, 'PNG', 20, y, pageW - 40, 100);
+  doc.addImage(revImgData, 'JPEG', 20, y, pageW - 40, 100);
   drawPageFooter(doc, pageNum++);
 
   // ============== STRANICA 6 — ANALIZA OSJETLJIVOSTI ==============
@@ -1591,7 +1591,7 @@ async function exportPDF() {
   doc.setTextColor(100, 110, 130);
   doc.text(t('card.sens.sub'), 20, y);
   y += 10;
-  doc.addImage(sensImgData, 'PNG', 20, y, pageW - 40, 130);
+  doc.addImage(sensImgData, 'JPEG', 20, y, pageW - 40, 130);
   drawPageFooter(doc, pageNum++);
 
   // ============== NOVA STRANICA — TIJEK NOVCA (intro + KPI + chart) ==============
@@ -1639,7 +1639,7 @@ async function exportPDF() {
 
   // Cashflow grafikon
   if (cfImgData) {
-    doc.addImage(cfImgData, 'PNG', 20, y, pageW - 40, 95);
+    doc.addImage(cfImgData, 'JPEG', 20, y, pageW - 40, 95);
     y += 95 + 4;
   }
 
@@ -1903,7 +1903,7 @@ async function captureChart(chartInst, width, height) {
         responsive: false,
         maintainAspectRatio: false,
         animation: false,
-        devicePixelRatio: 2
+        devicePixelRatio: 1
       }
     });
     temp.update('none');
@@ -1927,7 +1927,7 @@ function getCanvasDataUrl(canvas) {
   ctx.fillStyle = '#f0f4fa';
   ctx.fillRect(0, 0, tmp.width, tmp.height);
   ctx.drawImage(canvas, 0, 0);
-  return tmp.toDataURL('image/png');
+  return tmp.toDataURL('image/jpeg', 0.85);
 }
 
 // Serialises an inline SVG element to a PNG data URL with an explicit dark background
@@ -1953,7 +1953,7 @@ function svgToDataUrl(svgEl) {
       ctx.fillRect(0, 0, 800, 240);
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/png'));
+      resolve(canvas.toDataURL('image/jpeg', 0.92));
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
     img.src = url;

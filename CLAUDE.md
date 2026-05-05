@@ -102,6 +102,16 @@ jsPDF.API.events.push(['addFonts', function () {
 ```
 Must load after jsPDF CDN but before jspdf-autotable. `autoTable()` calls need `styles: { font: 'Inter' }` explicitly — it does not inherit `setFont()`.
 
+### PDF size optimization
+
+Target output is ~3-4 MB (was ~65 MB before optimization). Three settings keep it there — do not change without testing the file size:
+
+- `new jsPDF({ ..., compress: true })` — compresses streams including the two embedded Inter fonts (~1.5 MB → ~600 KB combined).
+- Charts and route SVGs encode as **JPEG**, not PNG: `getCanvasDataUrl()` uses `image/jpeg` quality `0.85`, `svgToDataUrl()` uses quality `0.92` (higher because route SVGs contain text). All `addImage()` calls pass `'JPEG'` as the format.
+- `captureChart()` uses `devicePixelRatio: 1` — canvas dimensions (1240-1500 px wide) already exceed the ~640 px needed for 170 mm at 96 DPI, so 2× rendering was wasted bytes.
+
+If charts ever look soft, raise canvas dimensions in the `captureChart()` calls in `exportPDF()` before reverting these settings.
+
 ### Languages
 
 | Code | Language | PDF filename prefix |
