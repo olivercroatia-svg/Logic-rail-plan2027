@@ -7,6 +7,8 @@ let costChartInst, revChartInst, sensChartInst, cfChartInst;
 let lastData = null;
 let currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem('lr_lang')) || 'hr';
 if (!I18N[currentLang]) currentLang = 'hr';
+let currentTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('lr_theme')) || 'dark';
+if (currentTheme !== 'light' && currentTheme !== 'dark') currentTheme = 'dark';
 
 /* ---------- I18N ---------- */
 function t(key, vars) {
@@ -43,6 +45,34 @@ function setLang(lang) {
   applyTranslations();
   // Re-render dynamic content (hero, tables, charts) so new language applies
   if (lastData) calc();
+}
+
+/* ---------- THEME ---------- */
+// Applies the given theme: sets data-theme attribute, persists, syncs Chart.js
+// defaults to the live CSS variables, and re-renders charts if data exists.
+function applyTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+  currentTheme = theme;
+  if (theme === 'dark') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+  try { localStorage.setItem('lr_theme', theme); } catch (e) {}
+
+  if (typeof Chart !== 'undefined') {
+    const styles = getComputedStyle(document.documentElement);
+    const txt = styles.getPropertyValue('--text-secondary').trim();
+    const brd = styles.getPropertyValue('--border').trim();
+    if (txt) Chart.defaults.color = txt;
+    if (brd) Chart.defaults.borderColor = brd;
+  }
+
+  if (lastData) renderCharts();
+}
+
+function toggleTheme() {
+  applyTheme(currentTheme === 'light' ? 'dark' : 'light');
 }
 
 /* ---------- DEFAULT VALUES ---------- */
@@ -741,6 +771,13 @@ Chart.defaults.color = '#9ca3b8';
 Chart.defaults.borderColor = '#2a3447';
 Chart.defaults.font.family = "'Inter', sans-serif";
 
+// Returns the live --text-primary CSS variable value. Used for legend labels,
+// where the lower-contrast --text-secondary (Chart.defaults.color) reads too dim.
+function chartLegendColor() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+  return v || '#e8eaf0';
+}
+
 function renderCharts() {
   const d = lastData.calc;
   const i = lastData.inputs;
@@ -779,6 +816,7 @@ function renderCharts() {
           legend: {
             position: 'right',
             labels: {
+              color: chartLegendColor(),
               font: { size: 12 },
               padding: 10,
               boxWidth: 14,
@@ -788,10 +826,12 @@ function renderCharts() {
                 const data = chart.data;
                 if (data.labels.length && data.datasets.length) {
                   const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                  const fontColor = chartLegendColor();
                   return data.labels.map((label, i) => ({
                     text: label + ' — ' + fmt(data.datasets[0].data[i] / total * 100, 1) + '%',
                     fillStyle: data.datasets[0].backgroundColor[i],
                     strokeStyle: data.datasets[0].backgroundColor[i],
+                    fontColor: fontColor,
                     pointStyle: 'circle',
                     index: i
                   }));
@@ -828,7 +868,7 @@ function renderCharts() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'top', labels: { font: { size: 12 }, usePointStyle: true, padding: 12 } },
+          legend: { position: 'top', labels: { color: chartLegendColor(), font: { size: 12 }, usePointStyle: true, padding: 12 } },
           tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmtEurK(ctx.parsed.y) } }
         },
         scales: {
@@ -937,7 +977,7 @@ function renderCharts() {
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { position: 'top', labels: { font: { size: 12 }, usePointStyle: true, padding: 12 } },
+          legend: { position: 'top', labels: { color: chartLegendColor(), font: { size: 12 }, usePointStyle: true, padding: 12 } },
           tooltip: {
             callbacks: {
               label: (ctx) => ctx.dataset.label + ': ' + fmtEurK(ctx.parsed.y)
@@ -1962,4 +2002,5 @@ function svgToDataUrl(svgEl) {
 
 /* ---------- INIT ---------- */
 applyTranslations();
+applyTheme(currentTheme);
 calc();

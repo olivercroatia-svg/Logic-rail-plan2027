@@ -83,6 +83,15 @@ build-fonts.js         – One-shot script: converts Inter TTF → jsPDF font JS
 
 Page numbering uses a `pageNum++` counter — when adding/removing pages, the footer numbers update automatically.
 
+### Theme system (light / dark mode)
+
+- `:root` defines the dark palette (default). `[data-theme="light"]` overrides ~25 CSS variables for light mode. UI rules read from variables — no per-rule light/dark forks.
+- `currentTheme` is global, persisted in `localStorage.lr_theme`, default `'dark'`. Never auto-detect `prefers-color-scheme` (per Oliver's requirement: dark always loads first unless user has explicitly toggled).
+- `applyTheme(theme)` sets `data-theme` on `<html>` (or removes it for dark), persists, syncs `Chart.defaults.color` and `Chart.defaults.borderColor` from live CSS vars, then re-renders charts via `renderCharts()` so colors update without reload.
+- `toggleTheme()` flips between dark and light; bound to header button (sun/moon icon, swapped via CSS `[data-theme="light"]` selector).
+- Called at startup: `applyTheme(currentTheme)` between `applyTranslations()` and `calc()`.
+- **PDF output is NOT theme-aware** — it always uses the dark palette baked into Inter fonts and the route SVGs (which have hardcoded dark fills). The `.route-diagram` UI container therefore keeps a hardcoded dark background in both themes so the same SVG renders correctly in the UI and in PDF without divergence.
+
 ### i18n system
 
 - `currentLang` – global, persisted in `localStorage.lr_lang`, default `'hr'`
